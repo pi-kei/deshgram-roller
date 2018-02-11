@@ -5,6 +5,8 @@ window.onload = function() {
     var cellSize = 100;
     var axisWidth = 30;
     var colors = [0xFF0000, 0xCCCC00, 0x00FF00, 0x0000FF];
+    var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 8);
+    var skin = 'non-numeric';
     var textStyle = { font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 500;
     var tweenEase = 'Linear';
@@ -16,6 +18,7 @@ window.onload = function() {
     function preload () {
 
         game.load.image('logo', 'phaser.png');
+        game.load.image('toggleSkinButton', 'toggleSkinButton.png');
 
     }
 
@@ -39,14 +42,26 @@ window.onload = function() {
                 var cell = game.add.group(cells);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
                 var cellIndex = x + y * 4;
-                var coords = ('0000' + cellIndex.toString(2)).slice(-4);
-                var cellText = game.add.text(0, 0, coords + '\n' + cellIndex, textStyle);
+                var str;
+                if (skin === 'numeric') {
+                    str = ('0000' + cellIndex.toString(2)).slice(-4) + '\n' + cellIndex;
+                } else {
+                    str = Phaser.ArrayUtils.shuffle([
+                        symbols[(cellIndex & 1) % 2],
+                        symbols[2 + (cellIndex >> 1 & 1) % 2],
+                        symbols[4 + (cellIndex >> 2 & 1) % 2],
+                        symbols[6 + (cellIndex >> 3 & 1) % 2]
+                    ]).join('');
+                }
+                var cellText = game.add.text(0, 0, str, textStyle);
                 cellText.setTextBounds(0, 0, cellSize, cellSize);
-                cellText.addColor('#' + ('000000' + colors[3].toString(16)).slice(-6), 0);
-                cellText.addColor('#' + ('000000' + colors[2].toString(16)).slice(-6), 1);
-                cellText.addColor('#' + ('000000' + colors[1].toString(16)).slice(-6), 2);
-                cellText.addColor('#' + ('000000' + colors[0].toString(16)).slice(-6), 3);
-                cellText.addColor('#000000', 4);
+                if (skin === 'numeric') {
+                    cellText.addColor('#' + ('000000' + colors[3].toString(16)).slice(-6), 0);
+                    cellText.addColor('#' + ('000000' + colors[2].toString(16)).slice(-6), 1);
+                    cellText.addColor('#' + ('000000' + colors[1].toString(16)).slice(-6), 2);
+                    cellText.addColor('#' + ('000000' + colors[0].toString(16)).slice(-6), 3);
+                    cellText.addColor('#000000', 4);
+                }
                 cell.add(cellBackgroundSprite);
                 cell.add(cellText);
                 cell.x = x * cellSize;
@@ -198,7 +213,7 @@ window.onload = function() {
         for (var y = 0; y < 4; ++y) {
             var cellBackgroundGraphics = game.add.graphics();
 
-            cellBackgroundGraphics.beginFill(colors[y]);
+            cellBackgroundGraphics.beginFill(skin === 'numeric' ? colors[y] : 0xFFFFFF);
             cellBackgroundGraphics.lineStyle(2, 0x000000, 1);
             cellBackgroundGraphics.drawRect(0, 0, cellSize, axisWidth);
             cellBackgroundGraphics.endFill();
@@ -219,7 +234,8 @@ window.onload = function() {
                 cell.onChildInputOut.add(onOut, this, 0, axis);
                 cell.onChildInputUp.add(onUp, this, 0);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
-                var cellText = game.add.text(0, 0, (x % 2).toString(10), textStyle);
+                var str = skin === 'numeric' ? (x % 2).toString(10) : symbols[y * 2 + x % 2];
+                var cellText = game.add.text(0, 0, str, textStyle);
                 cellText.setTextBounds(0, 0, cellSize, axisWidth);
                 cell.add(cellBackgroundSprite);
                 cell.add(cellText);
@@ -240,6 +256,19 @@ window.onload = function() {
         }
     }
 
+    function toggleSkin() {
+        if (skin === 'numeric') {
+            skin = 'non-numeric';
+        } else {
+            skin = 'numeric';
+        }
+
+        cells.destroy();
+        axes.destroy();
+        createCells();
+        createAxes();
+    }
+
     function create () {
 
         var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
@@ -247,5 +276,7 @@ window.onload = function() {
 
         createCells();
         createAxes();
+
+        game.add.button(0,0,'toggleSkinButton',toggleSkin,this);
     }
 };
