@@ -92,7 +92,8 @@ window.onload = function() {
             var cell = axis.getAt(x);
             if (axis.isRepeated) {
                 if (x < 2) {
-                    game.add.tween(cell.scale).to({ x: 1 }, tweenDuration, tweenEase, true);
+                    game.add.tween(cell.getAt(0).scale).to({ x: 1 }, tweenDuration, tweenEase, true);
+                    game.add.tween(cell.getAt(1)).to({ x: cellSize * 0.5 }, tweenDuration, tweenEase, true);
                     if (x === 1) {
                         game.add.tween(cell).to({ x: cellSize }, tweenDuration, tweenEase, true);
                     }
@@ -101,7 +102,8 @@ window.onload = function() {
                 }
             } else {
                 if (x < 2) {
-                    game.add.tween(cell.scale).to({ x: 2 }, tweenDuration, tweenEase, true);
+                    game.add.tween(cell.getAt(0).scale).to({ x: 2 }, tweenDuration, tweenEase, true);
+                    game.add.tween(cell.getAt(1)).to({ x: cellSize }, tweenDuration, tweenEase, true);
                     if (x === 1) {
                         game.add.tween(cell).to({ x: cellSize * 2 }, tweenDuration, tweenEase, true);
                     }
@@ -146,6 +148,13 @@ window.onload = function() {
             x: targetX,
             y: targetY
         }, tweenDuration, tweenEase, true);
+
+        for (var x = 0; x < 4; ++x) {
+            var cell = axis.getAt(x);
+            game.add.tween(cell.getAt(1)).to({
+                rotation: axis.isHorizontal ? 0 : -Math.PI * 0.5
+            }, tweenDuration, tweenEase, true);
+        }
     }
 
     function updateCells() {
@@ -235,8 +244,8 @@ window.onload = function() {
                 cell.onChildInputUp.add(onUp, this, 0);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
                 var str = skin === 'numeric' ? (x % 2).toString(10) : symbols[y * 2 + x % 2];
-                var cellText = game.add.text(0, 0, str, textStyle);
-                cellText.setTextBounds(0, 0, cellSize, axisWidth);
+                var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
+                cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
                 cell.add(cellBackgroundSprite);
                 cell.add(cellText);
                 cell.x = x * cellSize;
