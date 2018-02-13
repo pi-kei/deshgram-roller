@@ -192,23 +192,20 @@ window.onload = function() {
     }
 
     function onUp() {
-        if (!axisDown || !axisOver) {
-            return;
+        if (axisDown && axisOver) {
+            if (axisDown === axisOver) {
+                toggleAxisForward(axisOver);
+            }
+            if (axisDown.isHorizontal !== axisOver.isHorizontal) {
+                toggleAxisHorizontal(axisDown);
+                toggleAxisHorizontal(axisOver);
+            }
+            if (axisDown.isRepeated !== axisOver.isRepeated) {
+                toggleAxisRepeated(axisDown);
+                toggleAxisRepeated(axisOver);
+            }
+            updateCells();
         }
-
-        if (axisDown === axisOver) {
-            toggleAxisForward(axisOver);
-        }
-        if (axisDown.isHorizontal !== axisOver.isHorizontal) {
-            toggleAxisHorizontal(axisDown);
-            toggleAxisHorizontal(axisOver);
-        }
-        if (axisDown.isRepeated !== axisOver.isRepeated) {
-            toggleAxisRepeated(axisDown);
-            toggleAxisRepeated(axisOver);
-        }
-
-        updateCells();
 
         axisDown = null;
         axisOver = null;
