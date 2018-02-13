@@ -1,6 +1,6 @@
 window.onload = function() {
 
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create });
+    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, render: render });
 
     var cellSize = 100;
     var axisWidth = 30;
@@ -287,5 +287,16 @@ window.onload = function() {
         createAxes();
 
         game.add.button(0,0,'toggleSkinButton',toggleSkin,this);
+    }
+
+    function render() {
+        if (axisDown) {
+            game.debug.rectangle(axisDown.getBounds(), '#FF0000', false);
+            if (axisOver && axisDown !== axisOver) {
+                game.debug.rectangle(axisOver.getBounds(), '#FF0000', false);
+            }
+        } else {
+            game.debug.reset();
+        }
     }
 };
