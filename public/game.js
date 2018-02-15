@@ -20,6 +20,8 @@ window.onload = function() {
         game.load.image('logo', 'phaser.png');
         game.load.image('toggleSkinButton', 'toggleSkinButton.png');
         game.load.spritesheet('quarto', 'quarto.png', 100, 100);
+        game.load.spritesheet('picture', 'picture.gif', 100, 100);
+        game.load.spritesheet('coords', 'coords.png', 15, 15);
 
     }
 
@@ -68,6 +70,8 @@ window.onload = function() {
                     cell.add(cellText);
                 } else if (skin === 'quarto') {
                     cell.add(game.add.sprite(0, 0, 'quarto', cellIndex));
+                } else if (skin === 'picture') {
+                    cell.add(game.add.sprite(0, 0, 'picture', cellIndex));
                 }
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
@@ -256,6 +260,11 @@ window.onload = function() {
                     cellSprite.anchor.set(0.5);
                     cellSprite.scale.set(0.25);
                     cell.add(cellSprite);
+                } else if (skin === 'picture') {
+                    var cellCoords = game.add.sprite(cellSize * 0.5, axisWidth * 0.5, 'coords', x % 2 + y * 2);
+                    cellCoords.anchor.set(0.5);
+                    cellCoords.scale.set(1.5);
+                    cell.add(cellCoords);
                 }
                 cell.x = x * cellSize;
             }
@@ -279,6 +288,8 @@ window.onload = function() {
             skin = 'numeric';
         } else if (skin === 'numeric') {
             skin = 'quarto';
+        } else if (skin === 'quarto') {
+            skin = 'picture';
         } else {
             skin = 'non-numeric';
         }
