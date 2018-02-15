@@ -19,6 +19,7 @@ window.onload = function() {
 
         game.load.image('logo', 'phaser.png');
         game.load.image('toggleSkinButton', 'toggleSkinButton.png');
+        game.load.spritesheet('quarto', 'quarto.png', 100, 100);
 
     }
 
@@ -39,31 +40,35 @@ window.onload = function() {
 
         for (var y = 0; y < 4; ++y) {
             for (var x = 0; x < 4; ++x) {
+                var cellIndex = x + y * 4;
                 var cell = game.add.group(cells);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
-                var cellIndex = x + y * 4;
-                var str;
-                if (skin === 'numeric') {
-                    str = ('0000' + cellIndex.toString(2)).slice(-4) + '\n' + cellIndex;
-                } else {
-                    str = Phaser.ArrayUtils.shuffle([
-                        symbols[(cellIndex & 1) % 2],
-                        symbols[2 + (cellIndex >> 1 & 1) % 2],
-                        symbols[4 + (cellIndex >> 2 & 1) % 2],
-                        symbols[6 + (cellIndex >> 3 & 1) % 2]
-                    ]).join('');
-                }
-                var cellText = game.add.text(0, 0, str, textStyle);
-                cellText.setTextBounds(0, 0, cellSize, cellSize);
-                if (skin === 'numeric') {
-                    cellText.addColor('#' + ('000000' + colors[3].toString(16)).slice(-6), 0);
-                    cellText.addColor('#' + ('000000' + colors[2].toString(16)).slice(-6), 1);
-                    cellText.addColor('#' + ('000000' + colors[1].toString(16)).slice(-6), 2);
-                    cellText.addColor('#' + ('000000' + colors[0].toString(16)).slice(-6), 3);
-                    cellText.addColor('#000000', 4);
-                }
                 cell.add(cellBackgroundSprite);
-                cell.add(cellText);
+                if (skin === 'numeric' || skin === 'non-numeric') {
+                    var str;
+                    if (skin === 'numeric') {
+                        str = ('0000' + cellIndex.toString(2)).slice(-4) + '\n' + cellIndex;
+                    } else if (skin === 'non-numeric') {
+                        str = Phaser.ArrayUtils.shuffle([
+                            symbols[(cellIndex & 1) % 2],
+                            symbols[2 + (cellIndex >> 1 & 1) % 2],
+                            symbols[4 + (cellIndex >> 2 & 1) % 2],
+                            symbols[6 + (cellIndex >> 3 & 1) % 2]
+                        ]).join('');
+                    }
+                    var cellText = game.add.text(0, 0, str, textStyle);
+                    cellText.setTextBounds(0, 0, cellSize, cellSize);
+                    if (skin === 'numeric') {
+                        cellText.addColor('#' + ('000000' + colors[3].toString(16)).slice(-6), 0);
+                        cellText.addColor('#' + ('000000' + colors[2].toString(16)).slice(-6), 1);
+                        cellText.addColor('#' + ('000000' + colors[1].toString(16)).slice(-6), 2);
+                        cellText.addColor('#' + ('000000' + colors[0].toString(16)).slice(-6), 3);
+                        cellText.addColor('#000000', 4);
+                    }
+                    cell.add(cellText);
+                } else if (skin === 'quarto') {
+                    cell.add(game.add.sprite(0, 0, 'quarto', cellIndex));
+                }
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
             }
@@ -240,11 +245,18 @@ window.onload = function() {
                 cell.onChildInputOut.add(onOut, this, 0, axis);
                 cell.onChildInputUp.add(onUp, this, 0);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
-                var str = skin === 'numeric' ? (x % 2).toString(10) : symbols[y * 2 + x % 2];
-                var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
-                cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
                 cell.add(cellBackgroundSprite);
-                cell.add(cellText);
+                if (skin === 'numeric' || skin === 'non-numeric') {
+                    var str = skin === 'numeric' ? (x % 2).toString(10) : symbols[y * 2 + x % 2];
+                    var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
+                    cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
+                    cell.add(cellText);
+                } else if (skin === 'quarto') {
+                    var cellSprite = game.add.sprite(cellSize * 0.5, axisWidth * 0.5, 'quarto', x % 2 * Math.pow(2, y));
+                    cellSprite.anchor.set(0.5);
+                    cellSprite.scale.set(0.25);
+                    cell.add(cellSprite);
+                }
                 cell.x = x * cellSize;
             }
 
@@ -263,10 +275,12 @@ window.onload = function() {
     }
 
     function toggleSkin() {
-        if (skin === 'numeric') {
-            skin = 'non-numeric';
-        } else {
+        if (skin === 'non-numeric') {
             skin = 'numeric';
+        } else if (skin === 'numeric') {
+            skin = 'quarto';
+        } else {
+            skin = 'non-numeric';
         }
 
         cells.destroy();
