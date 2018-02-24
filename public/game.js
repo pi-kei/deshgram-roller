@@ -44,8 +44,9 @@ window.onload = function() {
             for (var x = 0; x < 4; ++x) {
                 var cellIndex = x + y * 4;
                 var cell = game.add.group(cells);
-                var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
-                cell.add(cellBackgroundSprite);
+                if (skin !== 'picture') {
+                    cell.add(game.add.sprite(0, 0, cellBackgroundTexture));
+                }
                 if (skin === 'numeric' || skin === 'non-numeric') {
                     var str;
                     if (skin === 'numeric') {
@@ -248,8 +249,7 @@ window.onload = function() {
                 cell.onChildInputOver.add(onOver, this, 0, axis);
                 cell.onChildInputOut.add(onOut, this, 0, axis);
                 cell.onChildInputUp.add(onUp, this, 0);
-                var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
-                cell.add(cellBackgroundSprite);
+                cell.add(game.add.sprite(0, 0, cellBackgroundTexture));
                 if (skin === 'numeric' || skin === 'non-numeric') {
                     var str = skin === 'numeric' ? (x % 2).toString(10) : symbols[y * 2 + x % 2];
                     var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
