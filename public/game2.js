@@ -5,6 +5,7 @@ window.onload = function() {
     var cellSize = 32;
     var axisWidth = 30;
     var colors = [0xFF0000, 0xFF9900, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF, 0x9900FF, 0xFF00FF];
+    var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 16);
     var textStyle = { font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 500;
     var tweenEase = 'Linear';
@@ -65,16 +66,19 @@ window.onload = function() {
             y: targetY
         }, tweenDuration, tweenEase, true);
 
+        var handler = function (target, tween, cell) { cell.visible = false; };
         for (var x = 0; x < 16; ++x) {
             var cell = axis.getAt(x);
             game.add.tween(cell.getAt(0).scale).to({ x: span }, tweenDuration, tweenEase, true);
             game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
             game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
             if ((x + 1) * span > 16) {
-                var handler = function (target, tween, cell) { cell.visible = false; };
-                game.add.tween(cell.scale)
-                    .to({ x: 0, y: 0 }, tweenDuration, tweenEase, true)
-                    .onComplete.addOnce(handler, this, 0, cell);
+                var tween = game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration, tweenEase, true);
+                if (tweenDuration === 1) {
+                    cell.visible = false;
+                } else {
+                    tween.onComplete.addOnce(handler, this, 0, cell);
+                }
             } else {
                 cell.visible = true;
                 game.add.tween(cell.scale).to({ x: 1, y: 1 }, tweenDuration, tweenEase, true);
@@ -196,7 +200,7 @@ window.onload = function() {
         for (var y = 0; y < 8; ++y) {
             var cellBackgroundGraphics = game.add.graphics();
 
-            cellBackgroundGraphics.beginFill(colors[y]);
+            cellBackgroundGraphics.beginFill(0xFFFFFF/*colors[y]*/);
             cellBackgroundGraphics.lineStyle(2, 0x000000, 1);
             cellBackgroundGraphics.drawRect(0, 0, cellSize, axisWidth);
             cellBackgroundGraphics.endFill();
@@ -218,7 +222,7 @@ window.onload = function() {
                 cell.onChildInputUp.add(onUp, this, 0);
                 var cellBackgroundSprite = game.add.sprite(0, 0, cellBackgroundTexture);
                 cell.add(cellBackgroundSprite);
-                var str = (x % 2).toString(10);
+                var str = symbols[y * 2 + x % 2];//(x % 2).toString(10);
                 var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
                 cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
                 cell.add(cellText);
@@ -237,6 +241,26 @@ window.onload = function() {
         }
     }
 
+    function shuffleAxes() {
+        axes.visible = false;
+        cells.visible = false;
+        tweenDuration = 1;
+        var i = 0;
+        var id = setInterval(function () {
+            if (i > 32) {
+                clearInterval(id);
+                axes.visible = true;
+                cells.visible = true;
+                tweenDuration = 500;
+            } else {
+                axisDown = axes.getAt(Math.floor(Math.random() * 8));
+                axisOver = axes.getAt(Math.floor(Math.random() * 8));
+                onUp();
+                ++i;
+            }
+        }, 50);
+    }
+
     function create () {
 
         var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
@@ -244,6 +268,7 @@ window.onload = function() {
 
         createCells();
         createAxes();
+        shuffleAxes();
     }
 
     function render() {
