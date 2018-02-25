@@ -1,11 +1,11 @@
 window.onload = function() {
 
-    var game = new Phaser.Game(640, 640, Phaser.AUTO, '', { preload: preload, create: create, render: render });
+    var game = new Phaser.Game(1152, 672, Phaser.AUTO, '', { preload: preload, create: create, render: render });
 
     var cellSize = 32;
     var axisWidth = 30;
     var colors = [0xFF0000, 0xFF9900, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF, 0x9900FF, 0xFF00FF];
-    var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 16);
+    var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 500;
     var tweenEase = 'Linear';
@@ -17,18 +17,18 @@ window.onload = function() {
     function preload () {
 
         game.load.image('logo', 'phaser.png');
-        game.load.spritesheet('picture', 'picture-512x512.jpg', 32, 32);
+        game.load.spritesheet('picture', 'picture-1024x512.jpg', 32, 32);
 
     }
 
     function createCells () {
         cells = game.add.group();
         cells.x = 64;
-        cells.y = 64;
+        cells.y = 96;
 
         for (var y = 0; y < 16; ++y) {
-            for (var x = 0; x < 16; ++x) {
-                var cellIndex = x + y * 16;
+            for (var x = 0; x < 32; ++x) {
+                var cellIndex = x + y * 32;
                 var cell = game.add.sprite(0, 0, 'picture', cellIndex, cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
@@ -47,17 +47,23 @@ window.onload = function() {
             } else {
                 targetY += -axisWidth;
             }
-        } else if (axis.isRepeated === 4) {
+        } else if (axis.isRepeated === 8) {
             if (!axis.isHorizontal) {
-                targetX += cellSize * 16 + axisWidth;
+                targetX += cellSize * 32 + axisWidth * 2;
             } else {
                 targetY += cellSize * 16 + axisWidth;
             }
-        } else if (axis.isRepeated === 8) {
+        } else if (axis.isRepeated === 16) {
             if (!axis.isHorizontal) {
-                targetX += cellSize * 16 + axisWidth * 2;
+                // empty
             } else {
                 targetY += cellSize * 16 + axisWidth * 2;
+            }
+        } else if (axis.isRepeated === 4) {
+            if (!axis.isHorizontal) {
+                targetX += cellSize * 32 + axisWidth;
+            } else {
+                targetY += -axisWidth * 2;
             }
         }
 
@@ -67,12 +73,12 @@ window.onload = function() {
         }, tweenDuration, tweenEase, true);
 
         var handler = function (target, tween, cell) { cell.visible = false; };
-        for (var x = 0; x < 16; ++x) {
+        for (var x = 0; x < 32; ++x) {
             var cell = axis.getAt(x);
             game.add.tween(cell.getAt(0).scale).to({ x: span }, tweenDuration, tweenEase, true);
             game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
             game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
-            if ((x + 1) * span > 16) {
+            if ((x + 1) * span > (axis.isHorizontal ? 32 : 16)) {
                 var tween = game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration, tweenEase, true);
                 if (tweenDuration === 1) {
                     cell.visible = false;
@@ -89,7 +95,7 @@ window.onload = function() {
     function toggleAxisForward(axis) {
         axis.isForward = !axis.isForward;
 
-        for (var x = 0; x < 16; x += 2) {
+        for (var x = 0; x < 32; x += 2) {
             var cell1 = axis.getAt(x);
             var cell2 = axis.getAt(x + 1);
             axis.swap(cell1, cell2);
@@ -109,17 +115,23 @@ window.onload = function() {
             } else {
                 targetY += -axisWidth;
             }
-        } else if (axis.isRepeated === 4) {
+        } else if (axis.isRepeated === 8) {
             if (!axis.isHorizontal) {
-                targetX += cellSize * 16 + axisWidth;
+                targetX += cellSize * 32 + axisWidth * 2;
             } else {
                 targetY += cellSize * 16 + axisWidth;
             }
-        } else if (axis.isRepeated === 8) {
+        } else if (axis.isRepeated === 16) {
             if (!axis.isHorizontal) {
-                targetX += cellSize * 16 + axisWidth * 2;
+                // empty
             } else {
                 targetY += cellSize * 16 + axisWidth * 2;
+            }
+        } else if (axis.isRepeated === 4) {
+            if (!axis.isHorizontal) {
+                targetX += cellSize * 32 + axisWidth;
+            } else {
+                targetY += -axisWidth * 2;
             }
         }
 
@@ -129,7 +141,7 @@ window.onload = function() {
             y: targetY
         }, tweenDuration, tweenEase, true);
 
-        for (var x = 0; x < 16; ++x) {
+        for (var x = 0; x < 32; ++x) {
             var cell = axis.getAt(x);
             game.add.tween(cell.getAt(1)).to({
                 rotation: axis.isHorizontal ? 0 : -Math.PI * 0.5
@@ -138,11 +150,11 @@ window.onload = function() {
     }
 
     function updateCells() {
-        for (var i = 0; i < 256; ++i) {
+        for (var i = 0; i < 512; ++i) {
             var cell = cells.getAt(i);
             var x = 0;
             var y = 0;
-            for (var j = 0, c = i >> j & 1; j < 8; ++j, c = i >> j & 1) {
+            for (var j = 0, c = i >> j & 1; j < 9; ++j, c = i >> j & 1) {
                 var axis = axes.getAt(j);
                 if (axis.isHorizontal) {
                     x += (axis.isForward ? c : 1 - c) * axis.isRepeated;
@@ -179,6 +191,10 @@ window.onload = function() {
             if (axisDown.isHorizontal !== axisOver.isHorizontal) {
                 toggleAxisHorizontal(axisDown);
                 toggleAxisHorizontal(axisOver);
+                if (axisDown.isRepeated === axisOver.isRepeated) {
+                    toggleAxisRepeated(axisDown, axisDown.isRepeated);
+                    toggleAxisRepeated(axisOver, axisOver.isRepeated);
+                }
             }
             if (axisDown.isRepeated !== axisOver.isRepeated) {
                 var axisDownSpan = axisDown.isRepeated;
@@ -195,9 +211,9 @@ window.onload = function() {
     function createAxes () {
         axes = game.add.group();
         axes.x = 64;
-        axes.y = 64;
+        axes.y = 96;
 
-        for (var y = 0; y < 8; ++y) {
+        for (var y = 0; y < 9; ++y) {
             var cellBackgroundGraphics = game.add.graphics();
 
             cellBackgroundGraphics.beginFill(0xFFFFFF/*colors[y]*/);
@@ -213,7 +229,7 @@ window.onload = function() {
             axis.isHorizontal = true;
             axis.isForward = true;
 
-            for (var x = 0; x < 16; ++x) {
+            for (var x = 0; x < 32; ++x) {
                 var cell = game.add.group(axis);
                 cell.inputEnableChildren = true;
                 cell.onChildInputDown.add(onDown, this, 0, axis);
@@ -234,8 +250,8 @@ window.onload = function() {
             axis.x = -axisWidth * 0.5;
             axis.y = -axisWidth * 0.5;
 
-            toggleAxisRepeated(axis, Math.pow(2, y % 4));
-            if (y > 3) {
+            toggleAxisRepeated(axis, Math.pow(2, y % 5));
+            if (y > 4) {
                 toggleAxisHorizontal(axis);
             }
         }
@@ -253,8 +269,8 @@ window.onload = function() {
                 //cells.visible = true;
                 tweenDuration = 500;
             } else {
-                axisDown = axes.getAt(Math.floor(Math.random() * 8));
-                axisOver = axes.getAt(Math.floor(Math.random() * 8));
+                axisDown = axes.getAt(Math.floor(Math.random() * 9));
+                axisOver = axes.getAt(Math.floor(Math.random() * 9));
                 onUp();
                 ++i;
             }
