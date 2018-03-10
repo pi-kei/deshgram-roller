@@ -2,6 +2,7 @@
   "name": "deshgram-roller",
   "version": "1.0.0",
   "main": "index.js",
+  "author": "Pavel Kabakin <krdt@deshgrammer.ru>",
   "license": "MIT",
   "devDependencies": {
     "http-server": "^0.11.1"
