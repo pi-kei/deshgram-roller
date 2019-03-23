@@ -1,6 +1,6 @@
 window.onload = function() {
 
-    var game = new Phaser.Game('100%', '100%', Phaser.AUTO, '');
+    var game = new Phaser.Game('100%', '100%', Phaser.WEBGL, '');
     game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
     game.state.add('Play', { preload: preload, create: create, render: render });
     game.state.start('PreloadJson');
