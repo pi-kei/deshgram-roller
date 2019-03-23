@@ -1,0 +1,10 @@
+{
+  "picture-512x512-mock.png": {
+    "aspectRatio": 1,
+    "source": "[The source of the image is supposed to be here]"
+  },
+  "picture-1024x512-mock.png": {
+    "aspectRatio": 2,
+    "source": "[The source of the image is supposed to be here]"
+  }
+}
