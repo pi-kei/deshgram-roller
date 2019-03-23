@@ -30,6 +30,7 @@ window.onload = function() {
     var axisOver;
     var shuffling;
     var actionsCounter;
+    var minActions;
     var pictureUrl;
 
     function preloadJson() {
@@ -266,6 +267,10 @@ window.onload = function() {
         };
     }
 
+    function getAxisIndexByInitialConfig(initialConfig) {
+        return (Math.log(initialConfig.isRepeated) / Math.LN2) + (initialConfig.isHorizontal ? 0 : horizontalAxesCount);
+    }
+
     function getAxisDistanceFromInitialConfig(index) {
         var score = 0;
         var axis = axes.getAt(index);
@@ -339,6 +344,7 @@ window.onload = function() {
                 game.add.tween(axes).to({ alpha: 0 }, tweenDuration, tweenEase, true);
                 hud.getAt(1).visible = true;
                 hud.getAt(2).visible = true;
+                hud.getAt(3).visible = true;
             }
         }
 
@@ -417,7 +423,7 @@ window.onload = function() {
         hud.add(sourceText);
 
         var nextLevelButtonGroup = game.add.group(hud);
-        var nextLevelText = game.add.text(0, 0, 'Next level >', { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var nextLevelText = game.add.text(0, 0, 'Next Level >', { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
         var nextLevelTextBounds = nextLevelText.getBounds();
         var nextLevelButtonBgGraphics = game.add.graphics();
         nextLevelButtonBgGraphics.beginFill(0x000000);
@@ -432,12 +438,75 @@ window.onload = function() {
         nextLevelButtonGroup.x = 1144 - nextLevelTextBounds.width;
         nextLevelButtonGroup.add(nextLevelButton);
         nextLevelButtonGroup.add(nextLevelText);
+
+        var minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        minActionsText.visible = false;
+        hud.add(minActionsText);
     }
 
     function updateActionsCounter() {
         if (!shuffling) {
             hud.getAt(0).text = 'Actions: ' + (++actionsCounter);
         }
+    }
+
+    function calcMinActions() {
+        minActions = 0;
+
+        var i;
+        var i2;
+        var initialConfig;
+        var done = false;
+        var axesState = axes.children.map(function (axis) {
+            return {
+                isRepeated: axis.isRepeated,
+                isHorizontal: axis.isHorizontal,
+                isForward: axis.isForward
+            };
+        });
+        while (!done) {
+            done = true;
+            for (i = 0; i < axesCount; ++i) {
+                initialConfig = getAxisInitialConfig(i);
+                if (
+                    axesState[i].isRepeated === initialConfig.isRepeated &&
+                    axesState[i].isHorizontal === initialConfig.isHorizontal
+                ) {
+                    continue;
+                }
+
+                done = false;
+
+                i2 = getAxisIndexByInitialConfig(axesState[i]);
+
+                if (
+                    axesState[i2].isRepeated === initialConfig.isRepeated &&
+                    axesState[i2].isHorizontal === initialConfig.isHorizontal
+                ) {
+                    minActions += 1;
+                    axesState[i2].isRepeated = axesState[i].isRepeated;
+                    axesState[i2].isHorizontal = axesState[i].isHorizontal;
+                    axesState[i].isRepeated = initialConfig.isRepeated;
+                    axesState[i].isHorizontal = initialConfig.isHorizontal;
+                } else {
+                    minActions += 1;
+                    initialConfig.isRepeated = axesState[i2].isRepeated;
+                    initialConfig.isHorizontal = axesState[i2].isHorizontal;
+                    axesState[i2].isRepeated = axesState[i].isRepeated;
+                    axesState[i2].isHorizontal = axesState[i].isHorizontal;
+                    axesState[i].isRepeated = initialConfig.isRepeated;
+                    axesState[i].isHorizontal = initialConfig.isHorizontal;
+                }
+            }
+        }
+        for (i = 0; i < axesCount; ++i) {
+            if (!axesState[i].isForward) {
+                minActions += 1;
+                axesState[i].isForward = true;
+            }
+        }
+
+        hud.getAt(3).text = 'Min Actions: ' + minActions;
     }
 
     function shuffleAxes() {
@@ -463,6 +532,7 @@ window.onload = function() {
         createAxes();
         createHud();
         shuffleAxes();
+        calcMinActions();
     }
 
     function render() {
