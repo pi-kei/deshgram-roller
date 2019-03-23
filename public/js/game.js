@@ -1,6 +1,6 @@
 window.onload = function() {
 
-    var game = new Phaser.Game('100%', '100%', Phaser.WEBGL, '');
+    var game = new Phaser.Game(1144, 662, Phaser.WEBGL, '');
     game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
     game.state.add('Play', { preload: preload, create: create, render: render });
     game.state.start('PreloadJson');
@@ -33,6 +33,11 @@ window.onload = function() {
     var pictureUrl;
 
     function preloadJson() {
+        game.stage.backgroundColor = "#555555";
+        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        game.scale.pageAlignHorizontally = true;
+        game.scale.pageAlignVertically = true;
+
         game.plugins.add(PhaserNineSlice.Plugin);
         game.load.script('gray', 'https://cdn.jsdelivr.net/npm/phaser-ce@2.12.0/filters/Gray.js');
         game.load.json('picturesMetadata', 'pictures-metadata.json');
@@ -85,7 +90,7 @@ window.onload = function() {
 
     function createCells () {
         cells = game.add.group();
-        cells.x = 2 * axisWidth;
+        cells.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         cells.y = 3 * axisWidth;
 
         grayFilter = game.add.filter('Gray');
@@ -343,7 +348,7 @@ window.onload = function() {
 
     function createAxes () {
         axes = game.add.group();
-        axes.x = 2 * axisWidth;
+        axes.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         axes.y = 3 * axisWidth;
 
         var cellBackgroundGraphics = game.add.graphics();
@@ -406,7 +411,8 @@ window.onload = function() {
 
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
         var source = picturesMetadata[pictureUrl].source;
-        var sourceText = game.add.text(2 * axisWidth, 3 * axisWidth + 512, source, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var sourceText = game.add.text(0, 3 * axisWidth + 512, source, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        sourceText.setTextBounds(0, 0, 1144, axisWidth);
         sourceText.visible = false;
         hud.add(sourceText);
 
@@ -423,7 +429,7 @@ window.onload = function() {
         var nextLevelButton = game.add.button(0,0,'nextLevelButtonBg',handleRestartButton,this);
         nextLevelButton.alpha = 0;
         nextLevelButtonGroup.visible = false;
-        nextLevelButtonGroup.x = 512;
+        nextLevelButtonGroup.x = 1144 - nextLevelTextBounds.width;
         nextLevelButtonGroup.add(nextLevelButton);
         nextLevelButtonGroup.add(nextLevelText);
     }
