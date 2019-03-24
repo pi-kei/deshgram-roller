@@ -392,6 +392,8 @@ window.onload = function() {
                 cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
                 cell.add(cellText);
                 cell.x = x * cellSize;
+                cellBackgroundSprite.input.useHandCursor = true;
+                cellText.input.useHandCursor = true;
             }
 
             axis.pivot.y = axisWidth * 0.5;
