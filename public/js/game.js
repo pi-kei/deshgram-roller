@@ -1,13 +1,18 @@
 window.onload = function() {
 
-    var game = new Phaser.Game(1144, 662, Phaser.WEBGL, '');
-    game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
-    game.state.add('Play', { preload: preload, create: create, render: render });
-    game.state.start('PreloadJson');
+    var game;
+    var fontLoader = new FontFaceObserver('04b_03');
+
+    fontLoader.load(null, 5000).then(function () {
+        game = new Phaser.Game(1144, 662, Phaser.WEBGL, '');
+        game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
+        game.state.add('Play', { preload: preload, create: create, render: render });
+        game.state.start('PreloadJson');
+    });
 
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
-    var textStyle = { fill: '#333333', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
+    var textStyle = { fill: '#333333', font: 'normal 20px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 1000;
     var tweenEase = 'Bounce.easeOut';
     var axesCount;
@@ -413,19 +418,21 @@ window.onload = function() {
     }
 
     function createHud() {
+        var hudTextStyle = Object.assign({}, textStyle, { fill: '#FF9999' });
+
         hud = game.add.group();
-        var actionsCounterText = game.add.text(0, 0, 'Actions: ' + actionsCounter, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var actionsCounterText = game.add.text(0, 0, 'Actions: ' + actionsCounter, hudTextStyle);
         hud.add(actionsCounterText);
 
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
         var source = picturesMetadata[pictureUrl].source;
-        var sourceText = game.add.text(0, 3 * axisWidth + 512, source, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
         sourceText.setTextBounds(0, 0, 1144, axisWidth);
         sourceText.visible = false;
         hud.add(sourceText);
 
         var nextLevelButtonGroup = game.add.group(hud);
-        var nextLevelText = game.add.text(0, 0, 'Next Level >', { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var nextLevelText = game.add.text(0, 0, 'Next Level >', hudTextStyle);
         var nextLevelTextBounds = nextLevelText.getBounds();
         var nextLevelButtonBgGraphics = game.add.graphics();
         nextLevelButtonBgGraphics.beginFill(0x000000);
@@ -441,7 +448,7 @@ window.onload = function() {
         nextLevelButtonGroup.add(nextLevelButton);
         nextLevelButtonGroup.add(nextLevelText);
 
-        var minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, { fill: '#FF9999', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' });
+        var minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, hudTextStyle);
         minActionsText.visible = false;
         hud.add(minActionsText);
     }
@@ -535,7 +542,7 @@ window.onload = function() {
             var cell = cells.getAt(i);
             var delay = 1000 * (horizontalCellsCount > verticalCellsCount ? 2 : 1) * ((cell.x / cellSize) + (cell.y / cellSize) * verticalCellsCount) / totalCellsCount;
             game.add.tween(cell).from({
-                x: cell.x * 3 - (horizontalAxesCount === verticalAxesCount ? 256 : 512),
+                x: cell.x * 4 - (horizontalAxesCount === verticalAxesCount ? 256 : 512),
                 y: cell.y * 3 - 256,
                 rotation: Math.PI * Math.random() * 4 - Math.PI * 2
             }, tweenDuration, 'Elastic', true, delay);
