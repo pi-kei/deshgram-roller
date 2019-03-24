@@ -8,8 +8,8 @@ window.onload = function() {
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { fill: '#333333', font: 'bold 20px Arial', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
-    var tweenDuration = 500;
-    var tweenEase = 'Linear';
+    var tweenDuration = 1000;
+    var tweenEase = 'Bounce.easeOut';
     var axesCount;
     var verticalAxesCount;
     var horizontalAxesCount;
@@ -176,7 +176,7 @@ window.onload = function() {
                 game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
                 game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
                 if (hide) {
-                    game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration, tweenEase, true)
+                    game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration, 'Linear', true)
                         .onComplete.addOnce(hideOnTweenComplete, this, 0, cell);
                 } else {
                     cell.visible = true;
@@ -340,8 +340,8 @@ window.onload = function() {
                 solvedPictures.push(pictureUrl);
                 localStorage.setItem('solvedPictures', solvedPictures.join('|'));
 
-                game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, tweenEase, true);
-                game.add.tween(axes).to({ alpha: 0 }, tweenDuration, tweenEase, true);
+                game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
+                game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true);
                 hud.getAt(1).visible = true;
                 hud.getAt(2).visible = true;
                 hud.getAt(3).visible = true;
@@ -527,12 +527,55 @@ window.onload = function() {
         shuffling = false;
     }
 
+    function introAnimation() {
+        var i;
+        for (i = 0; i < totalCellsCount; ++i) {
+            var cell = cells.getAt(i);
+            var delay = 1000 * (horizontalCellsCount > verticalCellsCount ? 2 : 1) * ((cell.x / cellSize) + (cell.y / cellSize) * verticalCellsCount) / totalCellsCount;
+            game.add.tween(cell).from({
+                x: cell.x * 3 - (horizontalAxesCount === verticalAxesCount ? 256 : 512),
+                y: cell.y * 3 - 256,
+                rotation: Math.PI * Math.random() * 4 - Math.PI * 2
+            }, tweenDuration, 'Elastic', true, delay);
+            game.add.tween(cell.scale).from({
+                x: 3,
+                y: 3
+            }, tweenDuration, 'Elastic', true, delay);
+        }
+        for (i = 0; i < axesCount; ++i) {
+            var axis = axes.getAt(i);
+            if (axis.isHorizontal) {
+                if (Math.log(axis.isRepeated) / Math.LN2 < topAxesCount) {
+                    game.add.tween(axis).from({
+                        x: axis.x - 1144
+                    }, tweenDuration, 'Elastic', true, 1500);
+                } else {
+                    game.add.tween(axis).from({
+                        x: axis.x + 1144
+                    }, tweenDuration, 'Elastic', true, 1550);
+                }
+            } else {
+                if (Math.log(axis.isRepeated) / Math.LN2 < leftAxesCount) {
+                    game.add.tween(axis).from({
+                        y: axis.y + 662
+                    }, tweenDuration, 'Elastic', true, 1600);
+                } else {
+                    game.add.tween(axis).from({
+                        y: axis.y - 662
+                    }, tweenDuration, 'Elastic', true, 1650);
+                }
+            }
+        }
+    }
+
     function create () {
         createCells();
         createAxes();
         createHud();
         shuffleAxes();
         calcMinActions();
+
+        introAnimation();
     }
 
     function render() {
