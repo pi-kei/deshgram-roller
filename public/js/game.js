@@ -12,7 +12,7 @@ window.onload = function() {
 
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
-    var textStyle = { fill: '#333333', font: 'normal 20px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
+    var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 1000;
     var tweenEase = 'Bounce.easeOut';
     var axesCount;
@@ -181,7 +181,7 @@ window.onload = function() {
                 game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
                 game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
                 if (hide) {
-                    game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration, 'Linear', true)
+                    game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration * 0.25, 'Linear', true)
                         .onComplete.addOnce(hideOnTweenComplete, this, 0, cell);
                 } else {
                     cell.visible = true;
