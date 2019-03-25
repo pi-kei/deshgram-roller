@@ -341,8 +341,6 @@ window.onload = function() {
             if (!shuffling && getTotalDistanceFromInitialConfig() === 0) {
                 timerStarted = undefined;
 
-                localStorage.setItem('solvedAxesCount', String(axesCount));
-
                 var solvedPictures = localStorage.getItem('solvedPictures');
                 solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
                 solvedPictures.push(pictureUrl);
@@ -353,6 +351,7 @@ window.onload = function() {
                 hud.getAt(1).visible = true;
                 hud.getAt(2).visible = true;
                 hud.getAt(3).visible = true;
+                hud.getAt(5).visible = true;
             }
         }
 
@@ -416,7 +415,13 @@ window.onload = function() {
         }
     }
 
-    function handleRestartButton() {
+    function handleNextLevelButton() {
+        localStorage.setItem('solvedAxesCount', String(axesCount));
+
+        game.state.restart();
+    }
+
+    function handleRestartLevelButton() {
         game.state.restart();
     }
 
@@ -444,7 +449,7 @@ window.onload = function() {
         var nextLevelButtonBgTexture = nextLevelButtonBgGraphics.generateTexture();
         nextLevelButtonBgGraphics.destroy();
         game.cache.addImage('nextLevelButtonBg', null, nextLevelButtonBgTexture.baseTexture.source);
-        var nextLevelButton = game.add.button(0,0,'nextLevelButtonBg',handleRestartButton,this);
+        var nextLevelButton = game.add.button(0,0,'nextLevelButtonBg',handleNextLevelButton,this);
         nextLevelButton.alpha = 0;
         nextLevelButtonGroup.visible = false;
         nextLevelButtonGroup.x = 1144 - nextLevelTextBounds.width;
@@ -458,6 +463,23 @@ window.onload = function() {
         var timerText = game.add.text(1144 / 2, 0, '00:00', hudTextStyle);
         timerText.x -= timerText.width / 2;
         hud.add(timerText);
+
+        var restartLevelButtonGroup = game.add.group(hud);
+        var restartLevelText = game.add.text(0, 0, 'Restart Level', hudTextStyle);
+        var restartLevelTextBounds = restartLevelText.getBounds();
+        var restartLevelButtonBgGraphics = game.add.graphics();
+        restartLevelButtonBgGraphics.beginFill(0x000000);
+        restartLevelButtonBgGraphics.drawRect(0, 0, restartLevelTextBounds.width, restartLevelTextBounds.height);
+        restartLevelButtonBgGraphics.endFill();
+        var restartLevelButtonBgTexture = restartLevelButtonBgGraphics.generateTexture();
+        restartLevelButtonBgGraphics.destroy();
+        game.cache.addImage('restartLevelButtonBg', null, restartLevelButtonBgTexture.baseTexture.source);
+        var restartLevelButton = game.add.button(0,0,'restartLevelButtonBg',handleRestartLevelButton,this);
+        restartLevelButton.alpha = 0;
+        restartLevelButtonGroup.visible = false;
+        restartLevelButtonGroup.x = nextLevelButtonGroup.x - restartLevelTextBounds.width - 30;
+        restartLevelButtonGroup.add(restartLevelButton);
+        restartLevelButtonGroup.add(restartLevelText);
     }
 
     function updateActionsCounter() {
