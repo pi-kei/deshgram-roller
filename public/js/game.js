@@ -37,6 +37,7 @@ window.onload = function() {
     var actionsCounter;
     var minActions;
     var pictureUrl;
+    var timerStarted;
 
     function preloadJson() {
         game.stage.backgroundColor = "#555555";
@@ -338,6 +339,8 @@ window.onload = function() {
             updateActionsCounter();
 
             if (!shuffling && getTotalDistanceFromInitialConfig() === 0) {
+                timerStarted = undefined;
+
                 localStorage.setItem('solvedAxesCount', String(axesCount));
 
                 var solvedPictures = localStorage.getItem('solvedPictures');
@@ -451,6 +454,10 @@ window.onload = function() {
         var minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, hudTextStyle);
         minActionsText.visible = false;
         hud.add(minActionsText);
+
+        var timerText = game.add.text(1144 / 2, 0, '00:00', hudTextStyle);
+        timerText.x -= timerText.width / 2;
+        hud.add(timerText);
     }
 
     function updateActionsCounter() {
@@ -585,6 +592,22 @@ window.onload = function() {
         calcMinActions();
 
         introAnimation();
+
+        timerStarted = Date.now() + 2000;
+    }
+
+    function updateTimer() {
+        if (typeof timerStarted !== 'number') {
+            return;
+        }
+        var elapsed = game.time.elapsedSecondsSince(timerStarted);
+        if (elapsed < 0) {
+            hud.getAt(4).text = '00:00';
+        } else {
+            var mins = Math.floor(elapsed / 60);
+            var secs = Math.floor(elapsed) - (mins * 60);
+            hud.getAt(4).text = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+        }
     }
 
     function render() {
@@ -596,6 +619,8 @@ window.onload = function() {
         } else {
             game.debug.reset();
         }
+
+        updateTimer();
     }
 };
 
