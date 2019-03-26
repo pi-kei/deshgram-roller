@@ -436,6 +436,9 @@ window.onload = function() {
         var source = picturesMetadata[pictureUrl].source;
         var sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
         sourceText.setTextBounds(0, 0, 1144, axisWidth);
+        sourceText.inputEnabled = true;
+        sourceText.input.useHandCursor = true;
+        sourceText.events.onInputUp.add(function () { window.top.location.href = source; });
         sourceText.visible = false;
         hud.add(sourceText);
 
