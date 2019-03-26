@@ -341,6 +341,8 @@ window.onload = function() {
             if (!shuffling && getTotalDistanceFromInitialConfig() === 0) {
                 timerStarted = undefined;
 
+                localStorage.setItem('solvedAxesCount', String(axesCount));
+
                 var solvedPictures = localStorage.getItem('solvedPictures');
                 solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
                 solvedPictures.push(pictureUrl);
@@ -416,12 +418,12 @@ window.onload = function() {
     }
 
     function handleNextLevelButton() {
-        localStorage.setItem('solvedAxesCount', String(axesCount));
-
         game.state.restart();
     }
 
     function handleRestartLevelButton() {
+        localStorage.setItem('solvedAxesCount', String(axesCount - 1));
+
         game.state.restart();
     }
 
