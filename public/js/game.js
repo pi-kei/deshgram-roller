@@ -4,8 +4,20 @@ window.onload = function() {
     var fontLoader = new FontFaceObserver('04b_03');
 
     fontLoader.load(null, 5000).then(function () {
-        window.PhaserGlobal = { disableAudio: true };
-        game = new Phaser.Game(1144, 662, Phaser.WEBGL, '');
+        window.PhaserGlobal = { disableAudio: true, hideBanner: true };
+        game = new Phaser.Game({
+            width: 1144,
+            height: 662,
+            renderer: Phaser.WEBGL,
+            backgroundColor: "#555555",
+            scaleMode: Phaser.ScaleManager.SHOW_ALL,
+            alignV: true,
+            alignH: true,
+            keyboard: false,
+            maxPointers: 1,
+            mouseWheel: false,
+            enableDebug: false
+        });
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
         game.state.add('Play', { preload: preload, create: create, render: render });
         game.state.start('PreloadJson');
@@ -41,11 +53,6 @@ window.onload = function() {
     var timerStarted;
 
     function preloadJson() {
-        game.stage.backgroundColor = "#555555";
-        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-        game.scale.pageAlignHorizontally = true;
-        game.scale.pageAlignVertically = true;
-
         game.plugins.add(PhaserNineSlice.Plugin);
         game.load.script('gray', 'https://cdn.jsdelivr.net/npm/phaser-ce@2.12.0/filters/Gray.js');
         game.load.json('picturesMetadata', 'pictures-metadata.json');
@@ -639,13 +646,15 @@ window.onload = function() {
     }
 
     function render() {
-        if (axisDown) {
-            game.debug.rectangle(axisDown.getBounds(), '#FF0000', false);
-            if (axisOver && axisDown !== axisOver) {
-                game.debug.rectangle(axisOver.getBounds(), '#FF0000', false);
+        if (!game.debug.isDisabled) {
+            if (axisDown) {
+                game.debug.rectangle(axisDown.getBounds(), '#FF0000', false);
+                if (axisOver && axisDown !== axisOver) {
+                    game.debug.rectangle(axisOver.getBounds(), '#FF0000', false);
+                }
+            } else {
+                game.debug.reset();
             }
-        } else {
-            game.debug.reset();
         }
 
         updateTimer();
