@@ -1,0 +1,256 @@
+{
+  "frames": [
+    {
+      "filename": "font-04b_03-gray",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
+    },
+    {
+      "filename": "font-04b_03-pink",
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
+    },
+    {
+      "filename": "cellBackgroundTopLeft",
+      "frame": {
+        "x": 0,
+        "y": 64,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackgroundTopCenter",
+      "frame": {
+        "x": 2,
+        "y": 64,
+        "w": 1,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackgroundTopRight",
+      "frame": {
+        "x": 3,
+        "y": 64,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackgroundMiddleLeft",
+      "frame": {
+        "x": 0,
+        "y": 66,
+        "w": 2,
+        "h": 1
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 1
+      }
+    },
+    {
+      "filename": "cellBackgroundMiddleCenter",
+      "frame": {
+        "x": 2,
+        "y": 66,
+        "w": 1,
+        "h": 1
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    {
+      "filename": "cellBackgroundMiddleRight",
+      "frame": {
+        "x": 3,
+        "y": 66,
+        "w": 2,
+        "h": 1
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 1
+      }
+    },
+    {
+      "filename": "cellBackgroundBottomLeft",
+      "frame": {
+        "x": 0,
+        "y": 67,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackgroundBottomCenter",
+      "frame": {
+        "x": 2,
+        "y": 67,
+        "w": 1,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackgroundBottomRight",
+      "frame": {
+        "x": 3,
+        "y": 67,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2
+      },
+      "sourceSize": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "filename": "cellBackground",
+      "frame": {
+        "x": 0,
+        "y": 64,
+        "w": 5,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 5,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 5,
+        "h": 5
+      }
+    }
+  ]
+}

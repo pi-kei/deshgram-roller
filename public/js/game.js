@@ -1,28 +1,9 @@
 window.onload = function() {
 
     var game;
-    var fontLoader = new FontFaceObserver('04b_03');
-
-    fontLoader.load(null, 5000).then(function () {
-        window.PhaserGlobal = { disableAudio: true, hideBanner: true };
-        game = new Phaser.Game({
-            width: 1144,
-            height: 662,
-            renderer: Phaser.WEBGL,
-            backgroundColor: "#555555",
-            scaleMode: Phaser.ScaleManager.SHOW_ALL,
-            alignV: true,
-            alignH: true,
-            keyboard: false,
-            maxPointers: 1,
-            mouseWheel: false,
-            enableDebug: false
-        });
-        game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
-        game.state.add('Play', { preload: preload, create: create, render: render });
-        game.state.start('PreloadJson');
-    });
-
+    var fontLoader;
+    var useBitmapFont = true;
+    var useGroupNineSlice = true;
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
@@ -52,13 +33,52 @@ window.onload = function() {
     var pictureUrl;
     var timerStarted;
 
+    if (useBitmapFont) {
+        createGame();
+    } else {
+        fontLoader = new FontFaceObserver('04b_03');
+        fontLoader.load(null, 5000).then(createGame);
+    }
+
+    function createGame() {
+        window.PhaserGlobal = { disableAudio: true, hideBanner: true };
+        game = new Phaser.Game({
+            width: 1144,
+            height: 662,
+            renderer: Phaser.WEBGL,
+            backgroundColor: "#555555",
+            scaleMode: Phaser.ScaleManager.SHOW_ALL,
+            alignV: true,
+            alignH: true,
+            keyboard: false,
+            maxPointers: 1,
+            mouseWheel: false,
+            enableDebug: false
+        });
+        game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
+        game.state.add('Play', { preload: preload, create: create, render: render });
+        game.state.start('PreloadJson');
+    }
+
     function preloadJson() {
-        game.plugins.add(PhaserNineSlice.Plugin);
+        if (!useGroupNineSlice) {
+            game.plugins.add(PhaserNineSlice.Plugin);
+        }
+        game.load.atlas('gameAtlas', 'assets/atlas.png', 'assets/atlas.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
         game.load.script('gray', 'https://cdn.jsdelivr.net/npm/phaser-ce@2.12.0/filters/Gray.js');
         game.load.json('picturesMetadata', 'pictures-metadata.json');
+
+        if (useBitmapFont) {
+            game.load.xml('04b_03-data', 'fonts/04b_03.fnt');
+        }
     }
 
     function startPlay() {
+        if (useBitmapFont) {
+            game.cache.addBitmapFontFromAtlas('04b_03-gray', 'gameAtlas', 'font-04b_03-gray', '04b_03-data');
+            game.cache.addBitmapFontFromAtlas('04b_03-pink', 'gameAtlas', 'font-04b_03-pink', '04b_03-data');
+        }
+
         game.state.start('Play');
     }
 
@@ -374,16 +394,6 @@ window.onload = function() {
         axes.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         axes.y = 3 * axisWidth;
 
-        var cellBackgroundGraphics = game.add.graphics();
-
-        cellBackgroundGraphics.beginFill(0xFFFFFF);
-        cellBackgroundGraphics.lineStyle(1, 0x333333, 1);
-        cellBackgroundGraphics.drawRect(0, 0, cellSize, axisWidth);
-        cellBackgroundGraphics.endFill();
-
-        var cellBackgroundTexture = cellBackgroundGraphics.generateTexture();
-        cellBackgroundGraphics.destroy();
-
         for (var y = 0; y < axesCount; ++y) {
             var axis = game.add.group(axes);
             axis.isRepeated = 1;
@@ -397,19 +407,44 @@ window.onload = function() {
                 cell.onChildInputOver.add(onOver, this, 0, axis);
                 cell.onChildInputOut.add(onOut, this, 0, axis);
                 cell.onChildInputUp.add(onUp, this, 0);
-                var cellBackgroundSprite = new PhaserNineSlice.NineSlice(game, 0, 0, cellBackgroundTexture, null, cellSize, axisWidth, {
-                    top: 3,
-                    bottom: 3,
-                    left: 3,
-                    right: 3
-                });
-                cell.add(cellBackgroundSprite);
+                var cellBackgroundSprite;
+                if (useGroupNineSlice) {
+                    cellBackgroundSprite = new NineSlice(game, cell, null, {
+                        key: 'gameAtlas',
+                        topLeftFrame: 'cellBackgroundTopLeft',
+                        topCenterFrame: 'cellBackgroundTopCenter',
+                        topRightFrame: 'cellBackgroundTopRight',
+                        middleLeftFrame: 'cellBackgroundMiddleLeft',
+                        middleCenterFrame: 'cellBackgroundMiddleCenter',
+                        middleRightFrame: 'cellBackgroundMiddleRight',
+                        bottomLeftFrame: 'cellBackgroundBottomLeft',
+                        bottomCenterFrame: 'cellBackgroundBottomCenter',
+                        bottomRightFrame: 'cellBackgroundBottomRight',
+                        inputEnableChildren: true,
+                        useHandCursor: true,
+                        propagateEvents: true
+                    });
+                } else {
+                    cellBackgroundSprite = new PhaserNineSlice.NineSlice(game, 0, 0, 'gameAtlas', 'cellBackground', cellSize, axisWidth, {
+                        top: 2,
+                        bottom: 2,
+                        left: 2,
+                        right: 2
+                    });
+                    cell.add(cellBackgroundSprite);
+                    cellBackgroundSprite.input.useHandCursor = true;
+                }
                 var str = symbols[y * 2 + x % 2];
-                var cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
-                cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
-                cell.add(cellText);
+                var cellText;
+                if (useBitmapFont) {
+                    cellText = game.add.bitmapText(cellSize * 0.5, axisWidth * 0.5, '04b_03-gray', str, 24, cell);
+                    cellText.anchor.set(0.5);
+                } else {
+                    cellText = game.add.text(cellSize * 0.5, axisWidth * 0.5, str, textStyle);
+                    cellText.setTextBounds(-cellSize * 0.5, -cellSize * 0.5, cellSize, cellSize);
+                    cell.add(cellText);
+                }
                 cell.x = x * cellSize;
-                cellBackgroundSprite.input.useHandCursor = true;
                 cellText.input.useHandCursor = true;
             }
 
@@ -439,25 +474,39 @@ window.onload = function() {
         var hudTextStyle = Object.assign({}, textStyle, { fill: '#FF9999' });
 
         hud = game.add.group();
-        var actionsCounterText = game.add.text(0, 0, 'Actions: ' + actionsCounter, hudTextStyle);
-        hud.add(actionsCounterText);
+        if (useBitmapFont) {
+            game.add.bitmapText(0, 0, '04b_03-pink', 'Actions: ' + actionsCounter, 24, hud);
+        } else {
+            var actionsCounterText = game.add.text(0, 0, 'Actions: ' + actionsCounter, hudTextStyle);
+            hud.add(actionsCounterText);
+        }
 
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
         var source = picturesMetadata[pictureUrl].source;
-        var sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
-        sourceText.setTextBounds(0, 0, 1144, axisWidth);
+        var sourceText;
+        if (useBitmapFont) {
+            sourceText = game.add.bitmapText(1144 / 2, 3 * axisWidth + 512, '04b_03-pink', source, 24, hud);
+            sourceText.anchor.set(0.5, 0);
+        } else {
+            sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
+            sourceText.setTextBounds(0, 0, 1144, axisWidth);
+            hud.add(sourceText);
+        }
         sourceText.inputEnabled = true;
         sourceText.input.useHandCursor = true;
         sourceText.events.onInputUp.add(function () { window.top.location.href = source; });
         sourceText.visible = false;
-        hud.add(sourceText);
 
         var nextLevelButtonGroup = game.add.group(hud);
-        var nextLevelText = game.add.text(0, 0, 'Next Level >', hudTextStyle);
-        var nextLevelTextBounds = nextLevelText.getBounds();
+        var nextLevelText;
+        if (useBitmapFont) {
+            nextLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Next Level >', 24);
+        } else {
+            nextLevelText = game.add.text(0, 0, 'Next Level >', hudTextStyle);
+        }
         var nextLevelButtonBgGraphics = game.add.graphics();
         nextLevelButtonBgGraphics.beginFill(0x000000);
-        nextLevelButtonBgGraphics.drawRect(0, 0, nextLevelTextBounds.width, nextLevelTextBounds.height);
+        nextLevelButtonBgGraphics.drawRect(0, 0, nextLevelText.width, nextLevelText.height);
         nextLevelButtonBgGraphics.endFill();
         var nextLevelButtonBgTexture = nextLevelButtonBgGraphics.generateTexture();
         nextLevelButtonBgGraphics.destroy();
@@ -465,24 +514,39 @@ window.onload = function() {
         var nextLevelButton = game.add.button(0,0,'nextLevelButtonBg',handleNextLevelButton,this);
         nextLevelButton.alpha = 0;
         nextLevelButtonGroup.visible = false;
-        nextLevelButtonGroup.x = 1144 - nextLevelTextBounds.width;
+        nextLevelButtonGroup.x = 1144 - nextLevelText.width;
         nextLevelButtonGroup.add(nextLevelButton);
         nextLevelButtonGroup.add(nextLevelText);
 
-        var minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, hudTextStyle);
+        var minActionsText;
+        if (useBitmapFont) {
+            minActionsText = game.add.bitmapText(150, 0, '04b_03-pink', 'Min Actions: ' + minActions, 24, hud);
+        } else {
+            minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, hudTextStyle);
+            hud.add(minActionsText);
+        }
         minActionsText.visible = false;
-        hud.add(minActionsText);
 
-        var timerText = game.add.text(1144 / 2, 0, '00:00', hudTextStyle);
-        timerText.x -= timerText.width / 2;
-        hud.add(timerText);
+        var timerText;
+        if (useBitmapFont) {
+            timerText = game.add.bitmapText(1144 / 2, 0, '04b_03-pink', '00:00', 24, hud);
+            timerText.anchor.set(0.5, 0);
+        } else {
+            timerText = game.add.text(1144 / 2, 0, '00:00', hudTextStyle);
+            timerText.x -= timerText.width / 2;
+            hud.add(timerText);
+        }
 
         var restartLevelButtonGroup = game.add.group(hud);
-        var restartLevelText = game.add.text(0, 0, 'Restart Level', hudTextStyle);
-        var restartLevelTextBounds = restartLevelText.getBounds();
+        var restartLevelText;
+        if (useBitmapFont) {
+            restartLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Restart Level', 24);
+        } else {
+            restartLevelText = game.add.text(0, 0, 'Restart Level', hudTextStyle);
+        }
         var restartLevelButtonBgGraphics = game.add.graphics();
         restartLevelButtonBgGraphics.beginFill(0x000000);
-        restartLevelButtonBgGraphics.drawRect(0, 0, restartLevelTextBounds.width, restartLevelTextBounds.height);
+        restartLevelButtonBgGraphics.drawRect(0, 0, restartLevelText.width, restartLevelText.height);
         restartLevelButtonBgGraphics.endFill();
         var restartLevelButtonBgTexture = restartLevelButtonBgGraphics.generateTexture();
         restartLevelButtonBgGraphics.destroy();
@@ -490,7 +554,7 @@ window.onload = function() {
         var restartLevelButton = game.add.button(0,0,'restartLevelButtonBg',handleRestartLevelButton,this);
         restartLevelButton.alpha = 0;
         restartLevelButtonGroup.visible = false;
-        restartLevelButtonGroup.x = nextLevelButtonGroup.x - restartLevelTextBounds.width - 30;
+        restartLevelButtonGroup.x = nextLevelButtonGroup.x - restartLevelText.width - 30;
         restartLevelButtonGroup.add(restartLevelButton);
         restartLevelButtonGroup.add(restartLevelText);
     }
@@ -659,5 +723,85 @@ window.onload = function() {
 
         updateTimer();
     }
+};
+
+function NineSlice(game, parent, name, data) {
+    Phaser.Group.call(this, game, parent, name);
+
+    this.inputEnableChildren = data.inputEnableChildren || false;
+
+    this.topLeftPart = game.add.image(0, 0, data.key, data.topLeftFrame, this);
+    this.topCenterPart = game.add.image(this.topLeftPart.width, 0, data.key, data.topCenterFrame, this);
+    this.topRightPart = game.add.image(this.topLeftPart.width + this.topCenterPart.width, 0, data.key, data.topRightFrame, this);
+    this.middleLeftPart = game.add.image(0, this.topLeftPart.height, data.key, data.middleLeftFrame, this);
+    this.middleCenterPart = game.add.image(this.topLeftPart.width, this.topLeftPart.height, data.key, data.middleCenterFrame, this);
+    this.middleRightPart = game.add.image(this.topLeftPart.width + this.topCenterPart.width, this.topLeftPart.height, data.key, data.middleRightFrame, this);
+    this.bottomLeftPart = game.add.image(0, this.topLeftPart.height + this.middleLeftPart.height, data.key, data.bottomLeftFrame, this);
+    this.bottomCenterPart = game.add.image(this.topLeftPart.width, this.topLeftPart.height + this.middleLeftPart.height, data.key, data.bottomCenterFrame, this);
+    this.bottomRightPart = game.add.image(this.topLeftPart.width + this.topCenterPart.width, this.topLeftPart.height + this.middleLeftPart.height, data.key, data.bottomRightFrame, this);
+
+    if (this.inputEnableChildren && data.useHandCursor) {
+        this.children.forEach(function (child) {
+            child.input.useHandCursor = true;
+        });
+    }
+
+    if (this.inputEnableChildren && data.propagateEvents) {
+        this.onChildInputDown.add(function (_, pointer) {
+            if (this.parent && this.parent.onChildInputDown) {
+                this.parent.onChildInputDown.dispatch(this, pointer);
+            }
+        }, this);
+        this.onChildInputOver.add(function (_, pointer) {
+            if (this.parent && this.parent.onChildInputOver) {
+                this.parent.onChildInputOver.dispatch(this, pointer);
+            }
+        }, this);
+        this.onChildInputOut.add(function (_, pointer) {
+            if (this.parent && this.parent.onChildInputOut) {
+                this.parent.onChildInputOut.dispatch(this, pointer);
+            }
+        }, this);
+        this.onChildInputUp.add(function (_, pointer) {
+            if (this.parent && this.parent.onChildInputUp) {
+                this.parent.onChildInputUp.dispatch(this, pointer);
+            }
+        }, this);
+    }
+
+    this.localWidth = this.topLeftPart.width + this.topCenterPart.width + this.topRightPart.width;
+    this.localHeight = this.topLeftPart.height + this.middleLeftPart.height + this.bottomLeftPart.height;
+}
+
+NineSlice.prototype = Object.create(Phaser.Group.prototype);
+NineSlice.prototype.constructor = NineSlice;
+
+NineSlice.prototype.renderTexture = function () {
+    var centerWidth = this.localWidth - this.topLeftPart.width - this.topRightPart.width;
+    this.topCenterPart.width = centerWidth;
+    this.middleCenterPart.width = centerWidth;
+    this.bottomCenterPart.width = centerWidth;
+
+    var rightX = this.topLeftPart.width + this.topCenterPart.width;
+    this.topRightPart.x = rightX;
+    this.middleRightPart.x = rightX;
+    this.bottomRightPart.x = rightX;
+
+    var middleHeight = this.localHeight - this.topLeftPart.height - this.bottomLeftPart.height;
+    this.middleLeftPart.height = middleHeight;
+    this.middleCenterPart.height = middleHeight;
+    this.middleRightPart.height = middleHeight;
+
+    var bottomY = this.topLeftPart.height + this.middleLeftPart.height;
+    this.bottomRightPart.y = bottomY;
+    this.bottomCenterPart.y = bottomY;
+    this.bottomRightPart.y = bottomY;
+};
+
+NineSlice.prototype.resize = function (width, height) {
+    this.localWidth = width;
+    this.localHeight = height;
+
+    this.renderTexture();
 };
 
