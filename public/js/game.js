@@ -4,6 +4,7 @@ window.onload = function() {
     var fontLoader = new FontFaceObserver('04b_03');
 
     fontLoader.load(null, 5000).then(function () {
+        window.PhaserGlobal = { disableAudio: true };
         game = new Phaser.Game(1144, 662, Phaser.WEBGL, '');
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
         game.state.add('Play', { preload: preload, create: create, render: render });
