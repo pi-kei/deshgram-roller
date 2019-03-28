@@ -332,20 +332,45 @@ window.onload = function() {
     }
 
     function onDown(sprite, pointer, axis) {
-        axisDown = axis;
-    }
-
-    function onOver(sprite, pointer, axis) {
-        axisOver = axis;
-    }
-
-    function onOut(sprite, pointer, axis) {
-        if (axis === axisOver) {
-            axisOver = null;
+        if (pointer.isMouse) {
+            axisDown = axis;
+        } else {
+            if (!axisDown) {
+                axisDown = axis;
+            } else {
+                axisOver = axis;
+            }
         }
     }
 
-    function onUp() {
+    function onOver(sprite, pointer, axis) {
+        if (pointer.isMouse) {
+            axisOver = axis;
+        }
+    }
+
+    function onOut(sprite, pointer, axis) {
+        if (pointer.isMouse) {
+            if (axis === axisOver) {
+                axisOver = null;
+            }
+        } else {
+            if (axis === axisDown) {
+                axisDown = null;
+            }
+            if (axis === axisOver) {
+                axisOver = null;
+            }
+        }
+    }
+
+    function onUp(sprite, pointer, axis) {
+        if (pointer && axis && !pointer.isMouse) {
+            if (axisDown && !axisOver) {
+                return;
+            }
+        }
+
         if (axisDown && axisOver && (shuffling || getTotalDistanceFromInitialConfig() > 0)) {
             if (axisDown === axisOver) {
                 toggleAxisForward(axisOver);
@@ -406,7 +431,7 @@ window.onload = function() {
                 cell.onChildInputDown.add(onDown, this, 0, axis);
                 cell.onChildInputOver.add(onOver, this, 0, axis);
                 cell.onChildInputOut.add(onOut, this, 0, axis);
-                cell.onChildInputUp.add(onUp, this, 0);
+                cell.onChildInputUp.add(onUp, this, 0, axis);
                 var cellBackgroundSprite;
                 if (useGroupNineSlice) {
                     cellBackgroundSprite = new NineSlice(game, cell, null, {
