@@ -133,7 +133,7 @@ window.onload = function() {
         for (var y = 0; y < verticalCellsCount; ++y) {
             for (var x = 0; x < horizontalCellsCount; ++x) {
                 var cellIndex = x + y * horizontalCellsCount;
-                var cell = game.add.sprite(0, 0, 'picture', cellIndex, cells);
+                var cell = game.add.image(0, 0, 'picture', cellIndex, cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
             }
