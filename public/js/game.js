@@ -66,7 +66,6 @@ window.onload = function() {
             game.plugins.add(PhaserNineSlice.Plugin);
         }
         game.load.atlas('gameAtlas', 'assets/atlas.png', 'assets/atlas.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
-        game.load.script('gray', 'https://cdn.jsdelivr.net/npm/phaser-ce@2.12.0/filters/Gray.js');
         game.load.json('picturesMetadata', 'pictures-metadata.json');
 
         if (useBitmapFont) {
