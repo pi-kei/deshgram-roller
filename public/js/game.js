@@ -500,26 +500,19 @@ window.onload = function() {
         sourceText.events.onInputUp.add(function () { window.top.location.href = source; });
         sourceText.visible = false;
 
-        var nextLevelButtonGroup = game.add.group(hud);
         var nextLevelText;
         if (useBitmapFont) {
-            nextLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Next Level >', 24);
+            nextLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Next Level >', 24, hud);
         } else {
             nextLevelText = game.add.text(0, 0, 'Next Level >', hudTextStyle);
+            hud.add(nextLevelText);
         }
-        var nextLevelButtonBgGraphics = game.add.graphics();
-        nextLevelButtonBgGraphics.beginFill(0x000000);
-        nextLevelButtonBgGraphics.drawRect(0, 0, nextLevelText.width, nextLevelText.height);
-        nextLevelButtonBgGraphics.endFill();
-        var nextLevelButtonBgTexture = nextLevelButtonBgGraphics.generateTexture();
-        nextLevelButtonBgGraphics.destroy();
-        game.cache.addImage('nextLevelButtonBg', null, nextLevelButtonBgTexture.baseTexture.source);
-        var nextLevelButton = game.add.button(0,0,'nextLevelButtonBg',handleNextLevelButton,this);
-        nextLevelButton.alpha = 0;
-        nextLevelButtonGroup.visible = false;
-        nextLevelButtonGroup.x = 1144 - nextLevelText.width;
-        nextLevelButtonGroup.add(nextLevelButton);
-        nextLevelButtonGroup.add(nextLevelText);
+        nextLevelText.hitArea = new Phaser.Rectangle(0, 0, nextLevelText.width, axisWidth * 2);
+        nextLevelText.inputEnabled = true;
+        nextLevelText.input.useHandCursor = true;
+        nextLevelText.events.onInputUp.add(handleNextLevelButton);
+        nextLevelText.visible = false;
+        nextLevelText.x = 1144 - nextLevelText.width;
 
         var minActionsText;
         if (useBitmapFont) {
@@ -540,26 +533,19 @@ window.onload = function() {
             hud.add(timerText);
         }
 
-        var restartLevelButtonGroup = game.add.group(hud);
         var restartLevelText;
         if (useBitmapFont) {
-            restartLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Restart Level', 24);
+            restartLevelText = game.add.bitmapText(0, 0, '04b_03-pink', 'Restart Level', 24, hud);
         } else {
             restartLevelText = game.add.text(0, 0, 'Restart Level', hudTextStyle);
+            hud.add(restartLevelText);
         }
-        var restartLevelButtonBgGraphics = game.add.graphics();
-        restartLevelButtonBgGraphics.beginFill(0x000000);
-        restartLevelButtonBgGraphics.drawRect(0, 0, restartLevelText.width, restartLevelText.height);
-        restartLevelButtonBgGraphics.endFill();
-        var restartLevelButtonBgTexture = restartLevelButtonBgGraphics.generateTexture();
-        restartLevelButtonBgGraphics.destroy();
-        game.cache.addImage('restartLevelButtonBg', null, restartLevelButtonBgTexture.baseTexture.source);
-        var restartLevelButton = game.add.button(0,0,'restartLevelButtonBg',handleRestartLevelButton,this);
-        restartLevelButton.alpha = 0;
-        restartLevelButtonGroup.visible = false;
-        restartLevelButtonGroup.x = nextLevelButtonGroup.x - restartLevelText.width - 30;
-        restartLevelButtonGroup.add(restartLevelButton);
-        restartLevelButtonGroup.add(restartLevelText);
+        restartLevelText.hitArea = new Phaser.Rectangle(0, 0, restartLevelText.width, axisWidth * 2);
+        restartLevelText.inputEnabled = true;
+        restartLevelText.input.useHandCursor = true;
+        restartLevelText.events.onInputUp.add(handleRestartLevelButton);
+        restartLevelText.visible = false;
+        restartLevelText.x = nextLevelText.x - restartLevelText.width - 30;
     }
 
     function updateActionsCounter() {
