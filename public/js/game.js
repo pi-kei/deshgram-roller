@@ -485,11 +485,14 @@ window.onload = function() {
         var source = picturesMetadata[pictureUrl].source;
         var sourceText;
         if (useBitmapFont) {
-            sourceText = game.add.bitmapText(1144 / 2, 3 * axisWidth + 512, '04b_03-pink', source, 24, hud);
-            sourceText.anchor.set(0.5, 0);
+            sourceText = game.add.bitmapText(1144 / 2, 4 * axisWidth + 512, '04b_03-pink', source, 24, hud);
+            sourceText.anchor.set(0.5, 0.5);
+            sourceText.hitArea = new Phaser.Rectangle(-1144 / 2, -axisWidth, 1144, axisWidth * 2);
         } else {
             sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
-            sourceText.setTextBounds(0, 0, 1144, axisWidth);
+            sourceText.setTextBounds(0, 0, 1144, axisWidth * 2);
+            var sourceTextBounds = sourceText.getBounds();
+            sourceText.hitArea = new Phaser.Rectangle((sourceTextBounds.width - 1144) / 2, (sourceTextBounds.height - (axisWidth * 2)) / 2, 1144, axisWidth * 2);
             hud.add(sourceText);
         }
         sourceText.inputEnabled = true;
