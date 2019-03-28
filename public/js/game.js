@@ -268,6 +268,24 @@ window.onload = function() {
         }
     }
 
+    function toggleAxisHighlighted(axis) {
+        axis.isHighlighted = !axis.isHighlighted;
+        var newTint = axis.isHighlighted ? 0xff9999 : 0xffffff;
+
+        for (var x = 0; x < maxCellsSide; ++x) {
+            var cell = axis.getAt(x);
+            var cellBackground = cell.getAt(0);
+            if (useGroupNineSlice) {
+                var children = cellBackground.children;
+                for (var y = 0; y < children.length; ++y) {
+                    children[y].tint = newTint;
+                }
+            } else {
+                cellBackground.tint = newTint;
+            }
+        }
+    }
+
     function updateCells() {
         for (var i = 0; i < totalCellsCount; ++i) {
             var cell = cells.getAt(i);
@@ -341,11 +359,19 @@ window.onload = function() {
                 axisOver = axis;
             }
         }
+
+        if (!axis.isHighlighted) {
+            toggleAxisHighlighted(axis);
+        }
     }
 
     function onOver(sprite, pointer, axis) {
         if (pointer.isMouse) {
             axisOver = axis;
+
+            if (axisDown && !axis.isHighlighted) {
+                toggleAxisHighlighted(axis);
+            }
         }
     }
 
@@ -362,10 +388,14 @@ window.onload = function() {
                 axisOver = null;
             }
         }
+
+        if (axis !== axisDown && axis !== axisOver && axis.isHighlighted) {
+            toggleAxisHighlighted(axis);
+        }
     }
 
-    function onUp(sprite, pointer, axis) {
-        if (pointer && axis && !pointer.isMouse) {
+    function onUp(sprite, pointer) {
+        if (pointer && !pointer.isMouse) {
             if (axisDown && !axisOver) {
                 return;
             }
@@ -410,6 +440,12 @@ window.onload = function() {
             }
         }
 
+        if (axisDown && axisDown.isHighlighted) {
+            toggleAxisHighlighted(axisDown);
+        }
+        if (axisOver && axisOver.isHighlighted) {
+            toggleAxisHighlighted(axisOver);
+        }
         axisDown = null;
         axisOver = null;
     }
@@ -424,6 +460,7 @@ window.onload = function() {
             axis.isRepeated = 1;
             axis.isHorizontal = true;
             axis.isForward = true;
+            axis.isHighlighted = false;
 
             for (var x = 0; x < maxCellsSide; ++x) {
                 var cell = game.add.group(axis);
@@ -724,17 +761,6 @@ window.onload = function() {
     }
 
     function render() {
-        if (!game.debug.isDisabled) {
-            if (axisDown) {
-                game.debug.rectangle(axisDown.getBounds(), '#FF0000', false);
-                if (axisOver && axisDown !== axisOver) {
-                    game.debug.rectangle(axisOver.getBounds(), '#FF0000', false);
-                }
-            } else {
-                game.debug.reset();
-            }
-        }
-
         updateTimer();
     }
 };
