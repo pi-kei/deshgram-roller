@@ -53,7 +53,8 @@ window.onload = function() {
             keyboard: false,
             maxPointers: 1,
             mouseWheel: false,
-            enableDebug: false
+            enableDebug: false,
+            antialias: true
         });
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
         game.state.add('Play', { preload: preload, create: create, render: render });
@@ -77,6 +78,7 @@ window.onload = function() {
         if (useBitmapFont) {
             game.cache.addBitmapFontFromAtlas('04b_03-gray', 'gameAtlas', 'font-04b_03-gray', '04b_03-data');
             game.cache.addBitmapFontFromAtlas('04b_03-pink', 'gameAtlas', 'font-04b_03-pink', '04b_03-data');
+            game.cache.getBaseTexture('gameAtlas').scaleMode = Phaser.scaleModes.NEAREST;
         }
 
         game.state.start('Play');
