@@ -28,6 +28,7 @@ window.onload = function() {
     var axisDown;
     var axisOver;
     var shuffling;
+    var solved;
     var actionsCounter;
     var minActions;
     var pictureUrl;
@@ -103,6 +104,7 @@ window.onload = function() {
         totalCellsCount = verticalCellsCount * horizontalCellsCount;
         cellSize = 512 / Math.min(verticalCellsCount, horizontalCellsCount);
         shuffling = true;
+        solved = false;
         actionsCounter = 0;
 
         var solvedPictures = localStorage.getItem('solvedPictures');
@@ -404,7 +406,7 @@ window.onload = function() {
             }
         }
 
-        if (axisDown && axisOver && (shuffling || getTotalDistanceFromInitialConfig() > 0)) {
+        if (axisDown && axisOver && (shuffling || !solved)) {
             if (axisDown === axisOver) {
                 toggleAxisForward(axisOver);
             }
@@ -422,24 +424,9 @@ window.onload = function() {
                 toggleAxisRepeated(axisOver, axisDownSpan);
             }
             updateCells();
-            updateActionsCounter();
-
-            if (!shuffling && getTotalDistanceFromInitialConfig() === 0) {
-                timerStarted = undefined;
-
-                localStorage.setItem('solvedAxesCount', String(axesCount));
-
-                var solvedPictures = localStorage.getItem('solvedPictures');
-                solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
-                solvedPictures.push(pictureUrl);
-                localStorage.setItem('solvedPictures', solvedPictures.join('|'));
-
-                game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
-                game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true);
-                hud.getAt(1).visible = true;
-                hud.getAt(2).visible = true;
-                hud.getAt(3).visible = true;
-                hud.getAt(5).visible = true;
+            if (!shuffling) {
+                updateActionsCounter();
+                checkSolved();
             }
         }
 
@@ -614,9 +601,7 @@ window.onload = function() {
     }
 
     function updateActionsCounter() {
-        if (!shuffling) {
-            hud.getAt(0).text = 'Actions: ' + (++actionsCounter);
-        }
+        hud.getAt(0).text = 'Actions: ' + (++actionsCounter);
     }
 
     function calcMinActions() {
@@ -736,8 +721,28 @@ window.onload = function() {
         timerStarted = Date.now() + 2000;
     }
 
+    function checkSolved() {
+        if (getTotalDistanceFromInitialConfig() === 0) {
+            solved = true;
+
+            localStorage.setItem('solvedAxesCount', String(axesCount));
+
+            var solvedPictures = localStorage.getItem('solvedPictures');
+            solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
+            solvedPictures.push(pictureUrl);
+            localStorage.setItem('solvedPictures', solvedPictures.join('|'));
+
+            game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
+            game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true);
+            hud.getAt(1).visible = true;
+            hud.getAt(2).visible = true;
+            hud.getAt(3).visible = true;
+            hud.getAt(5).visible = true;
+        }
+    }
+
     function updateTimer() {
-        if (typeof timerStarted !== 'number') {
+        if (solved) {
             return;
         }
         var elapsed = game.time.elapsedSecondsSince(timerStarted);
