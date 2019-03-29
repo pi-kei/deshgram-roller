@@ -57,7 +57,7 @@ window.onload = function() {
             antialias: true
         });
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
-        game.state.add('Play', { preload: preload, create: create, render: render });
+        game.state.add('Play', { init: init, preload: preload, create: create, update: update });
         game.state.start('PreloadJson');
     }
 
@@ -83,8 +83,7 @@ window.onload = function() {
         game.state.start('Play');
     }
 
-    function preload () {
-
+    function init() {
         axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
         if (isNaN(axesCount) || axesCount < 4) {
             axesCount = 4;
@@ -121,6 +120,9 @@ window.onload = function() {
         }
 
         pictureUrl = keys[Math.floor(Math.random() * keys.length)];
+    }
+
+    function preload () {
         game.load.spritesheet('picture', 'assets/' + pictureUrl, cellSize, cellSize);
     }
 
@@ -761,7 +763,7 @@ window.onload = function() {
         }
     }
 
-    function render() {
+    function update() {
         updateTimer();
     }
 };
