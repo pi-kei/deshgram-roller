@@ -829,7 +829,7 @@ GroupNineSlice.prototype.renderTexture = function () {
     this.middleRightPart.height = middleHeight;
 
     var bottomY = this.topLeftPart.height + this.middleLeftPart.height;
-    this.bottomRightPart.y = bottomY;
+    this.bottomLeftPart.y = bottomY;
     this.bottomCenterPart.y = bottomY;
     this.bottomRightPart.y = bottomY;
 };
