@@ -645,27 +645,14 @@ window.onload = function() {
                 }
 
                 done = false;
-
                 i2 = getAxisIndexByInitialConfig(axesState[i]);
-
-                if (
-                    axesState[i2].isRepeated === initialConfig.isRepeated &&
-                    axesState[i2].isHorizontal === initialConfig.isHorizontal
-                ) {
-                    minActions += 1;
-                    axesState[i2].isRepeated = axesState[i].isRepeated;
-                    axesState[i2].isHorizontal = axesState[i].isHorizontal;
-                    axesState[i].isRepeated = initialConfig.isRepeated;
-                    axesState[i].isHorizontal = initialConfig.isHorizontal;
-                } else {
-                    minActions += 1;
-                    initialConfig.isRepeated = axesState[i2].isRepeated;
-                    initialConfig.isHorizontal = axesState[i2].isHorizontal;
-                    axesState[i2].isRepeated = axesState[i].isRepeated;
-                    axesState[i2].isHorizontal = axesState[i].isHorizontal;
-                    axesState[i].isRepeated = initialConfig.isRepeated;
-                    axesState[i].isHorizontal = initialConfig.isHorizontal;
-                }
+                minActions += 1;
+                initialConfig.isRepeated = axesState[i2].isRepeated;
+                initialConfig.isHorizontal = axesState[i2].isHorizontal;
+                axesState[i2].isRepeated = axesState[i].isRepeated;
+                axesState[i2].isHorizontal = axesState[i].isHorizontal;
+                axesState[i].isRepeated = initialConfig.isRepeated;
+                axesState[i].isHorizontal = initialConfig.isHorizontal;
             }
         }
         for (i = 0; i < axesCount; ++i) {
