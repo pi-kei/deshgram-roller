@@ -536,10 +536,12 @@ window.onload = function() {
         var hudTextStyle = Object.assign({}, textStyle, { fill: '#FF9999' });
 
         hud = game.add.group();
+
+        var actionsCounterText;
         if (useBitmapFont) {
-            game.add.bitmapText(0, 0, '04b_03-pink', 'Actions: ' + actionsCounter, 24, hud);
+            actionsCounterText = game.add.bitmapText(5, 0, '04b_03-pink', 'Actions: ' + actionsCounter, 24, hud);
         } else {
-            var actionsCounterText = game.add.text(0, 0, 'Actions: ' + actionsCounter, hudTextStyle);
+            actionsCounterText = game.add.text(5, 0, 'Actions: ' + actionsCounter, hudTextStyle);
             hud.add(actionsCounterText);
         }
 
@@ -574,7 +576,7 @@ window.onload = function() {
         nextLevelText.input.useHandCursor = true;
         nextLevelText.events.onInputUp.add(handleNextLevelButton);
         nextLevelText.visible = false;
-        nextLevelText.x = 1144 - nextLevelText.width;
+        nextLevelText.x = 1144 - nextLevelText.width - 5;
 
         var minActionsText;
         if (useBitmapFont) {
@@ -583,6 +585,7 @@ window.onload = function() {
             minActionsText = game.add.text(150, 0, 'Min Actions: ' + minActions, hudTextStyle);
             hud.add(minActionsText);
         }
+        minActionsText.x = actionsCounterText.x + actionsCounterText.width + 60;
         minActionsText.visible = false;
 
         var timerText;
