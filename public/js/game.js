@@ -470,9 +470,9 @@ window.onload = function() {
                 cell.onChildInputOver.add(onOver, this, 0, axis);
                 cell.onChildInputOut.add(onOut, this, 0, axis);
                 cell.onChildInputUp.add(onUp, this, 0, axis);
-                var cellBackgroundSprite;
+                var cellBackground;
                 if (useGroupNineSlice) {
-                    cellBackgroundSprite = new NineSlice(game, cell, null, {
+                    cellBackground = new GroupNineSlice(game, cell, null, {
                         key: 'gameAtlas',
                         topLeftFrame: 'cellBackgroundTopLeft',
                         topCenterFrame: 'cellBackgroundTopCenter',
@@ -488,14 +488,14 @@ window.onload = function() {
                         propagateEvents: true
                     });
                 } else {
-                    cellBackgroundSprite = new PhaserNineSlice.NineSlice(game, 0, 0, 'gameAtlas', 'cellBackground', cellSize, axisWidth, {
+                    cellBackground = new PhaserNineSlice.NineSlice(game, 0, 0, 'gameAtlas', 'cellBackground', cellSize, axisWidth, {
                         top: 2,
                         bottom: 2,
                         left: 2,
                         right: 2
                     });
-                    cell.add(cellBackgroundSprite);
-                    cellBackgroundSprite.input.useHandCursor = true;
+                    cell.add(cellBackground);
+                    cellBackground.input.useHandCursor = true;
                 }
                 var str = symbols[y * 2 + x % 2];
                 var cellText;
@@ -766,7 +766,7 @@ window.onload = function() {
     }
 };
 
-function NineSlice(game, parent, name, data) {
+function GroupNineSlice(game, parent, name, data) {
     Phaser.Group.call(this, game, parent, name);
 
     this.inputEnableChildren = data.inputEnableChildren || false;
@@ -814,10 +814,10 @@ function NineSlice(game, parent, name, data) {
     this.localHeight = this.topLeftPart.height + this.middleLeftPart.height + this.bottomLeftPart.height;
 }
 
-NineSlice.prototype = Object.create(Phaser.Group.prototype);
-NineSlice.prototype.constructor = NineSlice;
+GroupNineSlice.prototype = Object.create(Phaser.Group.prototype);
+GroupNineSlice.prototype.constructor = GroupNineSlice;
 
-NineSlice.prototype.renderTexture = function () {
+GroupNineSlice.prototype.renderTexture = function () {
     var centerWidth = this.localWidth - this.topLeftPart.width - this.topRightPart.width;
     this.topCenterPart.width = centerWidth;
     this.middleCenterPart.width = centerWidth;
@@ -839,7 +839,7 @@ NineSlice.prototype.renderTexture = function () {
     this.bottomRightPart.y = bottomY;
 };
 
-NineSlice.prototype.resize = function (width, height) {
+GroupNineSlice.prototype.resize = function (width, height) {
     this.localWidth = width;
     this.localHeight = height;
 
