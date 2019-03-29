@@ -211,7 +211,7 @@ window.onload = function() {
                 // HACK: Using NineSlice.localWidth and NineSlice.renderTexture directly
                 game.add.tween(cell.getAt(0)).to({ localWidth: cellSize * span }, tweenDuration, tweenEase, true)
                     .onUpdateCallback(updateTextureOnTweenUpdate)
-                    .onComplete.addOnce(updateTextureOnTweenComplete, this, 0);
+                    .onComplete.addOnce(updateTextureOnTweenComplete, this);
                 game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
                 game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
                 if (hide) {
@@ -733,7 +733,8 @@ window.onload = function() {
             localStorage.setItem('solvedPictures', solvedPictures.join('|'));
 
             game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
-            game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true);
+            game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true)
+                .onComplete.addOnce(function (target) { target.visible = false; }, this);
             hud.getAt(1).visible = true;
             hud.getAt(2).visible = true;
             hud.getAt(3).visible = true;
