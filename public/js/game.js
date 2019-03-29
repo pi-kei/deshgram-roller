@@ -85,12 +85,36 @@ window.onload = function() {
     }
 
     function init() {
-        axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
-        if (isNaN(axesCount) || axesCount < 4) {
-            axesCount = 4;
-        } else if (axesCount >= 10) {
-            axesCount = Math.floor(Math.random() * 6) + 4;
+        var solvedPictures = localStorage.getItem('solvedPictures');
+        solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
+        var picturesMetadata = game.cache.getJSON('picturesMetadata');
+        var keys = Object.keys(picturesMetadata).filter(function (key) {
+            return solvedPictures.indexOf(key) === -1;
+        });
+        if (keys.length === 0) {
+            keys = Object.keys(picturesMetadata);
         }
+        var aspectRatios = {
+            1: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 1; }),
+            2: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 2; })
+        };
+
+        axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
+        if (isNaN(axesCount) || axesCount < 4 || axesCount > 9) {
+            if (aspectRatios["1"] === aspectRatios["2"]) {
+                axesCount = Math.floor(Math.random() * 6) + 4;
+            } else {
+                axesCount = Math.floor(Math.random() * 3) * 2 + 4 + (aspectRatios["1"] === false ? 1 : 0);
+            }
+        } else if (
+            (axesCount % 2 === 0 && aspectRatios["1"] === false) ||
+            (axesCount % 2 === 1 && aspectRatios["2"] === false)
+        ) {
+            keys = Object.keys(picturesMetadata);
+        }
+        keys = keys.filter(function (key) {
+            return picturesMetadata[key].aspectRatio === (axesCount % 2) + 1;
+        });
 
         verticalAxesCount = Math.floor(axesCount / 2);
         horizontalAxesCount = Math.ceil(axesCount / 2);
@@ -107,21 +131,7 @@ window.onload = function() {
         solved = false;
         actionsCounter = 0;
 
-        var solvedPictures = localStorage.getItem('solvedPictures');
-        solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
-
-        var picturesMetadata = game.cache.getJSON('picturesMetadata');
-        var keys = Object.keys(picturesMetadata).filter(function (key) {
-            return picturesMetadata[key].aspectRatio === (horizontalAxesCount > verticalAxesCount ? 2 : 1) && solvedPictures.indexOf(key) === -1;
-        });
-
-        if (keys.length === 0) {
-            keys = Object.keys(picturesMetadata).filter(function (key) {
-                return picturesMetadata[key].aspectRatio === (horizontalAxesCount > verticalAxesCount ? 2 : 1);
-            });
-        }
-
-        pictureUrl = keys[Math.floor(Math.random() * keys.length)];
+        pictureUrl = keys[Math.floor(Math.random() * keys.length)] || '';
     }
 
     function preload () {
@@ -534,7 +544,7 @@ window.onload = function() {
         }
 
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
-        var source = picturesMetadata[pictureUrl].source;
+        var source = picturesMetadata[pictureUrl] ? picturesMetadata[pictureUrl].source : '';
         var sourceText;
         if (useBitmapFont) {
             sourceText = game.add.bitmapText(1144 / 2, 4 * axisWidth + 512, '04b_03-pink', source, 24, hud);
