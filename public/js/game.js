@@ -614,7 +614,24 @@ window.onload = function() {
     function handleRestartLevelButton() {
         localStorage.setItem('solvedAxesCount', String(axesCount - 1));
 
-        game.state.restart();
+        shuffling = true;
+        solved = false;
+        actionsCounter = -1;
+        updateActionsCounter();
+        grayFilter.gray = 1;
+        axes.visible = true;
+        axes.alpha = 1;
+        hud.getAt(1).visible = false;
+        hud.getAt(2).visible = false;
+        hud.getAt(3).visible = false;
+        hud.getAt(5).visible = false;
+
+        shuffleAxes();
+        calcMinActions();
+
+        introAnimation();
+
+        timerStarted = Date.now() + 3000;
     }
 
     function createHud() {
