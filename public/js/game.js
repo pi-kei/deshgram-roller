@@ -154,6 +154,11 @@ window.onload = function() {
         var updateRotation;
         for (i = 0; i < axesCount; ++i) {
             axis = axes.getAt(i);
+            if (axis.isTweening) {
+                axis.isTweening = moveTweenIsRunning;
+            } else {
+                continue;
+            }
             tweenData = axis.tweenData;
             updateRotation = tweenData.isTweeningRotation;
             if (tweenData.isTweeningPosition) {
@@ -245,6 +250,8 @@ window.onload = function() {
     function toggleAxisRepeated(axis, span) {
         axis.isRepeated = span;
 
+        axis.isTweening = true;
+
         var targetPosition = calcTargetPosition(axis);
 
         if (shuffling) {
@@ -297,6 +304,8 @@ window.onload = function() {
     function toggleAxisForward(axis) {
         axis.isForward = !axis.isForward;
 
+        axis.isTweening = true;
+
         for (var x = 0; x < maxCellsSide; x += 2) {
             var cell1 = axis.getAt(x);
             var cell2 = axis.getAt(x + 1);
@@ -318,6 +327,8 @@ window.onload = function() {
 
     function toggleAxisHorizontal(axis) {
         axis.isHorizontal = !axis.isHorizontal;
+
+        axis.isTweening = true;
 
         var targetPosition = calcTargetPosition(axis);
 
@@ -533,7 +544,8 @@ window.onload = function() {
                 rotationDistance: 0,
                 rotationOffset: 0,
                 isTweeningPosition: false,
-                isTweeningRotation: false
+                isTweeningRotation: false,
+                isTweening: false
             };
 
             for (var x = 0; x < maxCellsSide; ++x) {
@@ -937,7 +949,7 @@ GroupNineSlice.prototype.renderTexture = function () {
     this.middleCenterPart.width = centerWidth;
     this.bottomCenterPart.width = centerWidth;
 
-    var rightX = this.topLeftPart.width + this.topCenterPart.width;
+    var rightX = this.topLeftPart.width + centerWidth;
     this.topRightPart.x = rightX;
     this.middleRightPart.x = rightX;
     this.bottomRightPart.x = rightX;
@@ -947,7 +959,7 @@ GroupNineSlice.prototype.renderTexture = function () {
     this.middleCenterPart.height = middleHeight;
     this.middleRightPart.height = middleHeight;
 
-    var bottomY = this.topLeftPart.height + this.middleLeftPart.height;
+    var bottomY = this.topLeftPart.height + middleHeight;
     this.bottomLeftPart.y = bottomY;
     this.bottomCenterPart.y = bottomY;
     this.bottomRightPart.y = bottomY;
