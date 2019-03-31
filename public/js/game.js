@@ -33,6 +33,7 @@ window.onload = function() {
     var minActions;
     var pictureUrl;
     var timerStarted;
+    var moveTween;
 
     if (useBitmapFont) {
         createGame();
@@ -138,6 +139,70 @@ window.onload = function() {
         game.load.spritesheet('picture', 'assets/' + pictureUrl, cellSize, cellSize);
     }
 
+    function handleMoveTweenUpdate(_, value, moveTweenData) {
+        if (typeof value !== 'number') {
+            value = 1;
+        }
+        var percent = moveTweenData ? moveTweenData.percent : 1;
+        var moveTweenIsRunning = moveTween.isRunning;
+        var i;
+        var x;
+        var y;
+        var axis;
+        var cell;
+        var tweenData;
+        var updateRotation;
+        for (i = 0; i < axesCount; ++i) {
+            axis = axes.getAt(i);
+            tweenData = axis.tweenData;
+            updateRotation = tweenData.isTweeningRotation;
+            if (tweenData.isTweeningPosition) {
+                axis.x = tweenData.offset.x + tweenData.distance.x * value;
+                axis.y = tweenData.offset.y + tweenData.distance.y * value;
+                tweenData.isTweeningPosition = moveTweenIsRunning;
+            }
+            if (tweenData.isTweeningRotation) {
+                axis.rotation = tweenData.rotationOffset + tweenData.rotationDistance * value;
+                tweenData.isTweeningRotation = moveTweenIsRunning;
+            }
+            for (x = 0; x < maxCellsSide; ++x) {
+                cell = axis.getAt(x);
+                tweenData = cell.tweenData;
+                if (tweenData.isTweeningX) {
+                    cell.x = tweenData.xOffset + tweenData.xDistance * value;
+                    tweenData.isTweeningX = moveTweenIsRunning;
+                }
+                if (tweenData.isTweeningScale) {
+                    y = tweenData.scaleDistance > 0 ?
+                        tweenData.scaleOffset + tweenData.scaleDistance * value :
+                        Math.max(0, tweenData.scaleOffset + tweenData.scaleDistance * percent * 4);
+                    cell.scale.x = cell.scale.y = y;
+                    tweenData.isTweeningScale = moveTweenIsRunning;
+                    if (!moveTweenIsRunning && y === 0) {
+                        cell.visible = false;
+                    }
+                }
+                if (tweenData.isTweeningWidth) {
+                    cell.getAt(0).resize(tweenData.widthOffset + tweenData.widthDistance * value, axisWidth);
+                    cell.getAt(1).x = cell.getAt(0).localWidth * 0.5;
+                    tweenData.isTweeningWidth = moveTweenIsRunning;
+                }
+                if (updateRotation) {
+                    cell.getAt(1).rotation = -axis.rotation;
+                }
+            }
+        }
+        for (i = 0; i < totalCellsCount; ++i) {
+            cell = cells.getAt(i);
+            tweenData = cell.tweenData;
+            if (tweenData.isTweening) {
+                cell.x = tweenData.offset.x + tweenData.distance.x * value;
+                cell.y = tweenData.offset.y + tweenData.distance.y * value;
+                tweenData.isTweening = moveTweenIsRunning;
+            }
+        }
+    }
+
     function createCells () {
         cells = game.add.group();
         cells.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
@@ -151,6 +216,11 @@ window.onload = function() {
                 var cell = game.add.image(0, 0, 'picture', cellIndex, cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
+                cell.tweenData = {
+                    distance: new Phaser.Point(0, 0),
+                    offset: new Phaser.Point(0, 0),
+                    isTweening: false
+                };
             }
         }
 
@@ -172,18 +242,6 @@ window.onload = function() {
         return targetPosition;
     }
 
-    function hideOnTweenComplete(target, tween, cell) {
-        cell.visible = false;
-    }
-
-    function updateTextureOnTweenUpdate(tween) {
-        tween.target.renderTexture();
-    }
-
-    function updateTextureOnTweenComplete(target) {
-        target.renderTexture();
-    }
-
     function toggleAxisRepeated(axis, span) {
         axis.isRepeated = span;
 
@@ -193,13 +251,13 @@ window.onload = function() {
             axis.x = targetPosition.targetX;
             axis.y = targetPosition.targetY;
         } else {
-            game.add.tween(axis).to({
-                x: targetPosition.targetX,
-                y: targetPosition.targetY
-            }, tweenDuration, tweenEase, true);
+            axis.tweenData.offset.x = axis.x;
+            axis.tweenData.offset.y = axis.y;
+            axis.tweenData.distance.x = targetPosition.targetX - axis.tweenData.offset.x;
+            axis.tweenData.distance.y = targetPosition.targetY - axis.tweenData.offset.y;
+            axis.tweenData.isTweeningPosition = axis.tweenData.distance.x !== 0 || axis.tweenData.distance.y !== 0;
         }
 
-        var handler = function (target, tween, cell) { cell.visible = false; };
         for (var x = 0; x < maxCellsSide; ++x) {
             var cell = axis.getAt(x);
             var hide = (x + 1) * span > (axis.isHorizontal ? horizontalCellsCount : verticalCellsCount);
@@ -218,19 +276,20 @@ window.onload = function() {
                     cell.scale.y = 1;
                 }
             } else {
-                // HACK: Using NineSlice.localWidth and NineSlice.renderTexture directly
-                game.add.tween(cell.getAt(0)).to({ localWidth: cellSize * span }, tweenDuration, tweenEase, true)
-                    .onUpdateCallback(updateTextureOnTweenUpdate)
-                    .onComplete.addOnce(updateTextureOnTweenComplete, this);
-                game.add.tween(cell.getAt(1)).to({ x: cellSize * span * 0.5 }, tweenDuration, tweenEase, true);
-                game.add.tween(cell).to({ x: x * cellSize * span }, tweenDuration, tweenEase, true);
+                cell.tweenData.widthOffset = cell.getAt(0).localWidth;
+                cell.tweenData.widthDistance = cellSize * span - cell.tweenData.widthOffset;
+                cell.tweenData.isTweeningWidth = cell.tweenData.widthDistance !== 0;
+                cell.tweenData.xOffset = cell.x;
+                cell.tweenData.xDistance = (x * cellSize * span) - cell.tweenData.xOffset;
+                cell.tweenData.isTweeningX = cell.tweenData.xDistance !== 0;
+                cell.tweenData.scaleOffset = cell.scale.x;
                 if (hide) {
-                    game.add.tween(cell.scale).to({ x: 0, y: 0 }, tweenDuration * 0.25, 'Linear', true)
-                        .onComplete.addOnce(hideOnTweenComplete, this, 0, cell);
+                    cell.tweenData.scaleDistance = -cell.tweenData.scaleOffset;
                 } else {
                     cell.visible = true;
-                    game.add.tween(cell.scale).to({ x: 1, y: 1 }, tweenDuration, tweenEase, true);
+                    cell.tweenData.scaleDistance = 1 - cell.tweenData.scaleOffset;
                 }
+                cell.tweenData.isTweeningScale = cell.tweenData.scaleDistance !== 0;
             }
         }
     }
@@ -247,8 +306,12 @@ window.onload = function() {
                 cell1.x = cellSize * axis.isRepeated * (x + 1);
                 cell2.x = cellSize * axis.isRepeated * x;
             } else {
-                game.add.tween(cell1).to({ x: cellSize * axis.isRepeated * (x + 1) }, tweenDuration, tweenEase, true);
-                game.add.tween(cell2).to({ x: cellSize * axis.isRepeated * x }, tweenDuration, tweenEase, true);
+                cell1.tweenData.xOffset = cell1.x;
+                cell1.tweenData.xDistance = (cellSize * axis.isRepeated * (x + 1)) - cell1.tweenData.xOffset;
+                cell1.tweenData.isTweeningX = cell1.tweenData.xDistance !== 0;
+                cell2.tweenData.xOffset = cell2.x;
+                cell2.tweenData.xDistance = (cellSize * axis.isRepeated * x) - cell2.tweenData.xOffset;
+                cell2.tweenData.isTweeningX = cell2.tweenData.xDistance !== 0;
             }
         }
     }
@@ -263,22 +326,21 @@ window.onload = function() {
             axis.x = targetPosition.targetX;
             axis.y = targetPosition.targetY;
         } else {
-            game.add.tween(axis).to({
-                rotation: axis.isHorizontal ? 0 : Math.PI * 0.5,
-                x: targetPosition.targetX,
-                y: targetPosition.targetY
-            }, tweenDuration, tweenEase, true);
+            axis.tweenData.offset.x = axis.x;
+            axis.tweenData.offset.y = axis.y;
+            axis.tweenData.distance.x = targetPosition.targetX - axis.tweenData.offset.x;
+            axis.tweenData.distance.y = targetPosition.targetY - axis.tweenData.offset.y;
+            axis.tweenData.isTweeningPosition = axis.tweenData.distance.x !== 0 || axis.tweenData.distance.y !== 0;
+            axis.tweenData.rotationOffset = axis.rotation;
+            axis.tweenData.rotationDistance = (axis.isHorizontal ? 0 : Math.PI * 0.5) - axis.tweenData.rotationOffset;
+            axis.tweenData.isTweeningRotation = axis.tweenData.rotationDistance !== 0;
         }
 
         for (var x = 0; x < maxCellsSide; ++x) {
             var cell = axis.getAt(x);
 
             if (shuffling) {
-                cell.getAt(1).rotation = axis.isHorizontal ? 0 : -Math.PI * 0.5;
-            } else {
-                game.add.tween(cell.getAt(1)).to({
-                    rotation: axis.isHorizontal ? 0 : -Math.PI * 0.5
-                }, tweenDuration, tweenEase, true);
+                cell.getAt(1).rotation = -axis.rotation;
             }
         }
     }
@@ -314,14 +376,17 @@ window.onload = function() {
                     y += (axis.isForward ? c : 1 - c) * axis.isRepeated;
                 }
             }
+            x *= cellSize;
+            y *= cellSize;
             if (shuffling) {
-                cell.x = x * cellSize;
-                cell.y = y * cellSize;
+                cell.x = x;
+                cell.y = y;
             } else {
-                game.add.tween(cell).to({
-                    x: x * cellSize,
-                    y: y * cellSize
-                }, tweenDuration, tweenEase, true);
+                cell.tweenData.offset.x = cell.x;
+                cell.tweenData.offset.y = cell.y;
+                cell.tweenData.distance.x = x - cell.tweenData.offset.x;
+                cell.tweenData.distance.y = y - cell.tweenData.offset.y;
+                cell.tweenData.isTweening = cell.tweenData.distance.x !== 0 || cell.tweenData.distance.y !== 0;
             }
         }
     }
@@ -416,7 +481,7 @@ window.onload = function() {
             }
         }
 
-        if (axisDown && axisOver && (shuffling || !solved)) {
+        if (axisDown && axisOver && (shuffling || (game.time.elapsedSecondsSince(timerStarted) > 0 && !moveTween.isRunning && !solved))) {
             if (axisDown === axisOver) {
                 toggleAxisForward(axisOver);
             }
@@ -435,6 +500,7 @@ window.onload = function() {
             }
             updateCells();
             if (!shuffling) {
+                moveTween.start();
                 updateActionsCounter();
                 checkSolved();
             }
@@ -461,6 +527,14 @@ window.onload = function() {
             axis.isHorizontal = true;
             axis.isForward = true;
             axis.isHighlighted = false;
+            axis.tweenData = {
+                distance: new Phaser.Point(0, 0),
+                offset: new Phaser.Point(0, 0),
+                rotationDistance: 0,
+                rotationOffset: 0,
+                isTweeningPosition: false,
+                isTweeningRotation: false
+            };
 
             for (var x = 0; x < maxCellsSide; ++x) {
                 var cell = game.add.group(axis);
@@ -508,6 +582,17 @@ window.onload = function() {
                 }
                 cell.x = x * cellSize;
                 cellText.input.useHandCursor = true;
+                cell.tweenData = {
+                    isTweeningX: false,
+                    xOffset: 0,
+                    xDistance: 0,
+                    isTweeningScale: false,
+                    scaleOffset: 0,
+                    scaleDistance: 0,
+                    isTweeningWidth: false,
+                    widthOffset: 0,
+                    widthDistance: 0
+                };
             }
 
             axis.pivot.y = axisWidth * 0.5;
@@ -723,6 +808,10 @@ window.onload = function() {
     }
 
     function create () {
+        moveTween = game.make.tween({}).to({}, tweenDuration, tweenEase);
+        moveTween.onUpdateCallback(handleMoveTweenUpdate);
+        moveTween.onComplete.add(handleMoveTweenUpdate);
+
         createCells();
         createAxes();
         createHud();
@@ -731,7 +820,7 @@ window.onload = function() {
 
         introAnimation();
 
-        timerStarted = Date.now() + 2000;
+        timerStarted = Date.now() + 3000;
     }
 
     function checkSolved() {
