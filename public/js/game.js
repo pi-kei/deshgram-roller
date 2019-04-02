@@ -4,6 +4,8 @@ window.onload = function() {
     var fontLoader;
     var useBitmapFont = true;
     var useGroupNineSlice = true;
+    var useGroupsForCells = true;
+    var useCacheForGroups = true;
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
@@ -22,6 +24,10 @@ window.onload = function() {
     var totalCellsCount;
     var cellSize;
     var cells;
+    var cellsArray;
+    var groupNoMove;
+    var groupMoveForward;
+    var groupMoveBackward;
     var grayFilter;
     var axes;
     var hud;
@@ -197,13 +203,20 @@ window.onload = function() {
                 }
             }
         }
-        for (i = 0; i < totalCellsCount; ++i) {
-            cell = cells.getAt(i);
-            tweenData = cell.tweenData;
-            if (tweenData.isTweening) {
-                cell.x = tweenData.offset.x + tweenData.distance.x * value;
-                cell.y = tweenData.offset.y + tweenData.distance.y * value;
-                tweenData.isTweening = moveTweenIsRunning;
+        if (useGroupsForCells) {
+            groupMoveBackward.x = groupMoveBackward.tweenData.distance.x * value;
+            groupMoveBackward.y = groupMoveBackward.tweenData.distance.y * value;
+            groupMoveForward.x = groupMoveForward.tweenData.distance.x * value;
+            groupMoveForward.y = groupMoveForward.tweenData.distance.y * value;
+        } else {
+            for (i = 0; i < totalCellsCount; ++i) {
+                cell = cells.getAt(i);
+                tweenData = cell.tweenData;
+                if (tweenData.isTweening) {
+                    cell.x = tweenData.offset.x + tweenData.distance.x * value;
+                    cell.y = tweenData.offset.y + tweenData.distance.y * value;
+                    tweenData.isTweening = moveTweenIsRunning;
+                }
             }
         }
     }
@@ -212,24 +225,48 @@ window.onload = function() {
         cells = game.add.group();
         cells.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         cells.y = 3 * axisWidth;
+        cellsArray = [];
 
         grayFilter = game.add.filter('Gray');
+
+        if (useGroupsForCells) {
+            groupNoMove = game.add.group(cells);
+            groupMoveForward = game.add.group(cells);
+            groupMoveBackward = game.add.group(cells);
+
+            groupMoveForward.tweenData = {
+                distance: new Phaser.Point(0, 0)
+            };
+            groupMoveBackward.tweenData = {
+                distance: new Phaser.Point(0, 0)
+            };
+
+            if (useCacheForGroups) {
+                groupNoMove.filters = [grayFilter];
+                groupMoveForward.filters = [grayFilter];
+                groupMoveBackward.filters = [grayFilter];
+            }
+        }
+        if (!useGroupsForCells || !useCacheForGroups) {
+            cells.filters = [grayFilter];
+        }
 
         for (var y = 0; y < verticalCellsCount; ++y) {
             for (var x = 0; x < horizontalCellsCount; ++x) {
                 var cellIndex = x + y * horizontalCellsCount;
-                var cell = game.add.image(0, 0, 'picture', cellIndex, cells);
+                var cell = game.add.image(0, 0, 'picture', cellIndex, useGroupsForCells ? groupNoMove : cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
-                cell.tweenData = {
-                    distance: new Phaser.Point(0, 0),
-                    offset: new Phaser.Point(0, 0),
-                    isTweening: false
-                };
+                if (!useGroupsForCells) {
+                    cell.tweenData = {
+                        distance: new Phaser.Point(0, 0),
+                        offset: new Phaser.Point(0, 0),
+                        isTweening: false
+                    };
+                }
+                cellsArray.push(cell);
             }
         }
-
-        cells.filters = [grayFilter];
     }
 
     function calcTargetPosition(axis) {
@@ -375,8 +412,9 @@ window.onload = function() {
     }
 
     function updateCells() {
+        var distance = useGroupsForCells ? new Phaser.Point() : undefined;
         for (var i = 0; i < totalCellsCount; ++i) {
-            var cell = cells.getAt(i);
+            var cell = cellsArray[i];
             var x = 0;
             var y = 0;
             for (var j = 0, c = i >> j & 1; j < axesCount; ++j, c = i >> j & 1) {
@@ -393,11 +431,64 @@ window.onload = function() {
                 cell.x = x;
                 cell.y = y;
             } else {
-                cell.tweenData.offset.x = cell.x;
-                cell.tweenData.offset.y = cell.y;
-                cell.tweenData.distance.x = x - cell.tweenData.offset.x;
-                cell.tweenData.distance.y = y - cell.tweenData.offset.y;
-                cell.tweenData.isTweening = cell.tweenData.distance.x !== 0 || cell.tweenData.distance.y !== 0;
+                if (useGroupsForCells) {
+                    if (cell.parent !== cells) {
+                        cell.x += cell.parent.x;
+                        cell.y += cell.parent.y;
+                    }
+
+                    distance.x = x - cell.x;
+                    distance.y = y - cell.y;
+
+                    if (distance.x !== 0 || distance.y !== 0) {
+                        if (distance.x > 0 || (distance.x === 0 && distance.y > 0)) {
+                            groupMoveForward.add(cell, true);
+                            groupMoveForward.tweenData.distance.x = distance.x;
+                            groupMoveForward.tweenData.distance.y = distance.y;
+                        } else {
+                            groupMoveBackward.add(cell, true);
+                            groupMoveBackward.tweenData.distance.x = distance.x;
+                            groupMoveBackward.tweenData.distance.y = distance.y;
+                        }
+                    } else {
+                        groupNoMove.add(cell, true);
+                    }
+                } else {
+                    cell.tweenData.offset.x = cell.x;
+                    cell.tweenData.offset.y = cell.y;
+                    cell.tweenData.distance.x = x - cell.tweenData.offset.x;
+                    cell.tweenData.distance.y = y - cell.tweenData.offset.y;
+                    cell.tweenData.isTweening = cell.tweenData.distance.x !== 0 || cell.tweenData.distance.y !== 0;
+                }
+            }
+        }
+
+        if (useGroupsForCells) {
+            groupNoMove.x = 0;
+            groupNoMove.y = 0;
+            groupMoveForward.x = 0;
+            groupMoveForward.y = 0;
+            groupMoveBackward.x = 0;
+            groupMoveBackward.y = 0;
+
+            if (!shuffling && useCacheForGroups) {
+                if (groupNoMove.cacheAsBitmap) {
+                    groupNoMove.updateCache();
+                } else {
+                    groupNoMove.cacheAsBitmap = true;
+                }
+
+                if (groupMoveForward.cacheAsBitmap) {
+                    groupMoveForward.updateCache();
+                } else {
+                    groupMoveForward.cacheAsBitmap = true;
+                }
+
+                if (groupMoveBackward.cacheAsBitmap) {
+                    groupMoveBackward.updateCache();
+                } else {
+                    groupMoveBackward.cacheAsBitmap = true;
+                }
             }
         }
     }
@@ -638,6 +729,12 @@ window.onload = function() {
         hud.getAt(3).visible = false;
         hud.getAt(5).visible = false;
 
+        if (useGroupsForCells && useCacheForGroups) {
+            groupNoMove.cacheAsBitmap = false;
+            groupMoveForward.cacheAsBitmap = false;
+            groupMoveBackward.cacheAsBitmap = false;
+        }
+
         shuffleAxes();
         calcMinActions();
 
@@ -798,7 +895,7 @@ window.onload = function() {
     function introAnimation() {
         var i;
         for (i = 0; i < totalCellsCount; ++i) {
-            var cell = cells.getAt(i);
+            var cell = cellsArray[i];
             var delay = 1000 * (horizontalCellsCount > verticalCellsCount ? 2 : 1) * ((cell.x / cellSize) + (cell.y / cellSize) * verticalCellsCount) / totalCellsCount;
             game.add.tween(cell).from({
                 x: cell.x * 4 - (horizontalAxesCount === verticalAxesCount ? 256 : 512),
