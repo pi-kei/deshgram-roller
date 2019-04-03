@@ -67,7 +67,7 @@ window.onload = function() {
             antialias: true
         });
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
-        game.state.add('Play', { init: init, preload: preload, create: create, update: update });
+        game.state.add('Play', { init: init, preload: preload, create: create });
         game.state.start('PreloadJson');
     }
 
@@ -978,6 +978,7 @@ window.onload = function() {
         introAnimation();
 
         timerStarted = Date.now() + 3000;
+        game.time.events.loop(1000, updateTimer);
     }
 
     function checkSolved() {
@@ -1018,10 +1019,6 @@ window.onload = function() {
             var secs = Math.floor(elapsed) - (mins * 60);
             hud.getAt(4).text = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
         }
-    }
-
-    function update() {
-        updateTimer();
     }
 };
 
