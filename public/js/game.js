@@ -6,7 +6,8 @@ window.onload = function() {
     var useGroupNineSlice = true;
     var useGroupsForCells = true;
     var useCacheForGroups = true;
-    var useFilter = false;
+    var useGrayscale = false;
+    var useFilterForGrayscale = false;
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
@@ -229,7 +230,7 @@ window.onload = function() {
         cells.y = 3 * axisWidth;
         cellsArray = [];
 
-        if (useFilter) {
+        if (useGrayscale && useFilterForGrayscale) {
             grayFilter = game.add.filter('Gray');
         }
 
@@ -245,20 +246,20 @@ window.onload = function() {
                 distance: new Phaser.Point(0, 0)
             };
 
-            if (useCacheForGroups && useFilter) {
+            if (useCacheForGroups && useGrayscale && useFilterForGrayscale) {
                 groupNoMove.filters = [grayFilter];
                 groupMoveForward.filters = [grayFilter];
                 groupMoveBackward.filters = [grayFilter];
             }
         }
-        if ((!useGroupsForCells || !useCacheForGroups) && useFilter) {
+        if ((!useGroupsForCells || !useCacheForGroups) && useGrayscale && useFilterForGrayscale) {
             cells.filters = [grayFilter];
         }
 
         for (var y = 0; y < verticalCellsCount; ++y) {
             for (var x = 0; x < horizontalCellsCount; ++x) {
                 var cellIndex = x + y * horizontalCellsCount;
-                var cell = game.add.image(0, 0, useFilter ? 'picture' : 'pictureGray', cellIndex, useGroupsForCells ? groupNoMove : cells);
+                var cell = game.add.image(0, 0, !useGrayscale || useFilterForGrayscale ? 'picture' : 'pictureGray', cellIndex, useGroupsForCells ? groupNoMove : cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
                 if (!useGroupsForCells) {
@@ -272,7 +273,7 @@ window.onload = function() {
             }
         }
 
-        if (!useFilter) {
+        if (useGrayscale && !useFilterForGrayscale) {
             var bmd = game.make.bitmapData();
             bmd.load('picture');
             picture = game.add.image(cells.x, cells.y, bmd);
@@ -733,11 +734,13 @@ window.onload = function() {
         solved = false;
         actionsCounter = -1;
         updateActionsCounter();
-        if (useFilter) {
-            grayFilter.gray = 1;
-        } else {
-            picture.visible = false;
-            picture.alpha = 0;
+        if (useGrayscale) {
+            if (useFilterForGrayscale) {
+                grayFilter.gray = 1;
+            } else {
+                picture.visible = false;
+                picture.alpha = 0;
+            }
         }
         axes.visible = true;
         axes.alpha = 1;
@@ -962,7 +965,7 @@ window.onload = function() {
         moveTween.onUpdateCallback(handleMoveTweenUpdate);
         moveTween.onComplete.add(handleMoveTweenUpdate);
 
-        if (!useFilter) {
+        if (useGrayscale && !useFilterForGrayscale) {
             var bmd = game.make.bitmapData();
             bmd.load('picture');
             bmd.processPixelRGB(function forEachPixel(pixel) {
@@ -999,11 +1002,13 @@ window.onload = function() {
             solvedPictures.push(pictureUrl);
             localStorage.setItem('solvedPictures', solvedPictures.join('|'));
 
-            if (useFilter) {
-                game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
-            } else {
-                picture.visible = true;
-                game.add.tween(picture).to({ alpha: 1 }, tweenDuration * 2, 'Linear', true, tweenDuration);
+            if (useGrayscale) {
+                if (useFilterForGrayscale) {
+                    game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
+                } else {
+                    picture.visible = true;
+                    game.add.tween(picture).to({ alpha: 1 }, tweenDuration * 2, 'Linear', true, tweenDuration);
+                }
             }
             game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true)
                 .onComplete.addOnce(function (target) { target.visible = false; }, this);
