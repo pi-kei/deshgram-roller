@@ -774,22 +774,29 @@ window.onload = function() {
         }
 
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
-        var source = picturesMetadata[pictureUrl] ? picturesMetadata[pictureUrl].source : '';
+        var caption = '';
+        var url = null;
+        if (picturesMetadata.hasOwnProperty(pictureUrl)) {
+            caption = picturesMetadata[pictureUrl].caption || '';
+            url = picturesMetadata[pictureUrl].url;
+        }
         var sourceText;
         if (useBitmapFont) {
-            sourceText = game.add.bitmapText(1144 / 2, 4 * axisWidth + 512, '04b_03-pink', source, 24, hud);
+            sourceText = game.add.bitmapText(1144 / 2, 4 * axisWidth + 512, '04b_03-pink', caption, 24, hud);
             sourceText.anchor.set(0.5, 0.5);
             sourceText.hitArea = new Phaser.Rectangle(-1144 / 2, -axisWidth, 1144, axisWidth * 2);
         } else {
-            sourceText = game.add.text(0, 3 * axisWidth + 512, source, hudTextStyle);
+            sourceText = game.add.text(0, 3 * axisWidth + 512, caption, hudTextStyle);
             sourceText.setTextBounds(0, 0, 1144, axisWidth * 2);
             var sourceTextBounds = sourceText.getBounds();
             sourceText.hitArea = new Phaser.Rectangle((sourceTextBounds.width - 1144) / 2, (sourceTextBounds.height - (axisWidth * 2)) / 2, 1144, axisWidth * 2);
             hud.add(sourceText);
         }
-        sourceText.inputEnabled = true;
-        sourceText.input.useHandCursor = true;
-        sourceText.events.onInputUp.add(function () { window.top.location.href = source; });
+        if (url) {
+            sourceText.inputEnabled = true;
+            sourceText.input.useHandCursor = true;
+            sourceText.events.onInputUp.add(function () { window.top.location.href = url; });
+        }
         sourceText.visible = false;
 
         var nextLevelText;
