@@ -6,8 +6,6 @@ window.onload = function() {
     var useGroupNineSlice = true;
     var useGroupsForCells = true;
     var useCacheForGroups = true;
-    var useGrayscale = false;
-    var useFilterForGrayscale = false;
     var axisWidth = 30;
     var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
     var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
@@ -31,7 +29,6 @@ window.onload = function() {
     var groupNoMove;
     var groupMoveForward;
     var groupMoveBackward;
-    var grayFilter;
     var axes;
     var hud;
     var axisDown;
@@ -140,6 +137,7 @@ window.onload = function() {
         shuffling = true;
         solved = false;
         actionsCounter = 0;
+        picture = null;
 
         pictureUrl = keys[Math.floor(Math.random() * keys.length)] || '';
     }
@@ -230,10 +228,6 @@ window.onload = function() {
         cells.y = 3 * axisWidth;
         cellsArray = [];
 
-        if (useGrayscale && useFilterForGrayscale) {
-            grayFilter = game.add.filter('Gray');
-        }
-
         if (useGroupsForCells) {
             groupNoMove = game.add.group(cells);
             groupMoveForward = game.add.group(cells);
@@ -245,21 +239,12 @@ window.onload = function() {
             groupMoveBackward.tweenData = {
                 distance: new Phaser.Point(0, 0)
             };
-
-            if (useCacheForGroups && useGrayscale && useFilterForGrayscale) {
-                groupNoMove.filters = [grayFilter];
-                groupMoveForward.filters = [grayFilter];
-                groupMoveBackward.filters = [grayFilter];
-            }
-        }
-        if ((!useGroupsForCells || !useCacheForGroups) && useGrayscale && useFilterForGrayscale) {
-            cells.filters = [grayFilter];
         }
 
         for (var y = 0; y < verticalCellsCount; ++y) {
             for (var x = 0; x < horizontalCellsCount; ++x) {
                 var cellIndex = x + y * horizontalCellsCount;
-                var cell = game.add.image(0, 0, !useGrayscale || useFilterForGrayscale ? 'picture' : 'pictureGray', cellIndex, useGroupsForCells ? groupNoMove : cells);
+                var cell = game.add.image(0, 0, 'picture', cellIndex, useGroupsForCells ? groupNoMove : cells);
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
                 if (!useGroupsForCells) {
@@ -271,14 +256,6 @@ window.onload = function() {
                 }
                 cellsArray.push(cell);
             }
-        }
-
-        if (useGrayscale && !useFilterForGrayscale) {
-            var bmd = game.make.bitmapData();
-            bmd.load('picture');
-            picture = game.add.image(cells.x, cells.y, bmd);
-            picture.alpha = 0;
-            picture.visible = false;
         }
     }
 
@@ -724,30 +701,42 @@ window.onload = function() {
     }
 
     function handleNextLevelButton() {
+        if (game.load.isLoading || game.tweens.getAll().length > 0) {
+            return;
+        }
+
         game.state.restart();
     }
 
     function handleRestartLevelButton() {
+        if (game.load.isLoading || game.tweens.getAll().length > 0) {
+            return;
+        }
+
+        var solvedPictures = localStorage.getItem('solvedPictures').split('|');
+        pictureUrl = solvedPictures[solvedPictures.length - 1];
+
         localStorage.setItem('solvedAxesCount', String(axesCount - 1));
 
         shuffling = true;
         solved = false;
         actionsCounter = -1;
         updateActionsCounter();
-        if (useGrayscale) {
-            if (useFilterForGrayscale) {
-                grayFilter.gray = 1;
-            } else {
-                picture.visible = false;
-                picture.alpha = 0;
-            }
+        if (picture) {
+            picture.destroy();
+            picture = null;
         }
+        cells.visible = true;
+        cells.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         axes.visible = true;
         axes.alpha = 1;
+        updateSourceText();
         hud.getAt(1).visible = false;
         hud.getAt(2).visible = false;
         hud.getAt(3).visible = false;
         hud.getAt(5).visible = false;
+        hud.getAt(6).visible = false;
+        hud.getAt(7).visible = false;
 
         if (useGroupsForCells && useCacheForGroups) {
             groupNoMove.cacheAsBitmap = false;
@@ -763,8 +752,81 @@ window.onload = function() {
         timerStarted = Date.now() + 3000;
     }
 
+    function updateSourceText() {
+        var sourceText = hud.getAt(1);
+        var picturesMetadata = game.cache.getJSON('picturesMetadata');
+        var caption = '';
+        var url = null;
+        if (picturesMetadata.hasOwnProperty(pictureUrl)) {
+            caption = picturesMetadata[pictureUrl].caption || '';
+            url = picturesMetadata[pictureUrl].url;
+        }
+        sourceText.text = caption;
+        if (url) {
+            sourceText.inputEnabled = true;
+            sourceText.input.useHandCursor = true;
+            sourceText.events.onInputUp.removeAll();
+            sourceText.events.onInputUp.add(function () { window.top.location.href = url; });
+        } else {
+            sourceText.inputEnabled = false;
+        }
+    }
+
+    function showOtherPicture(newPictureUrl, isPrev) {
+        var pictureToHide = picture || cells;
+        game.add.tween(pictureToHide).to({
+            x: pictureToHide.x + 1144 * (isPrev ? 1 : -1)
+        }, tweenDuration, 'Expo.easeInOut', true)
+            .onComplete.addOnce(function (target) {
+                if (target !== cells) {
+                    target.destroy();
+                } else {
+                    target.visible = false;
+                }
+            });
+
+        picture = game.add.image(2 * axisWidth, 3 * axisWidth, newPictureUrl, null);
+        picture.x += picture.width === picture.height ? 256 : 0;
+        game.add.tween(picture).from({
+            x: picture.x + 1144 * (isPrev ? -1 : 1)
+        }, tweenDuration, 'Expo.easeInOut', true);
+        pictureUrl = newPictureUrl;
+        updateSourceText();
+    }
+
+    function handlePrevNextPictureButton(btn, pointer, isOver, isPrev) {
+        if (game.load.isLoading || game.tweens.getAll().length > 0) {
+            return;
+        }
+        var solvedPictures = localStorage.getItem('solvedPictures');
+        solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
+        var currentPictureIndex = solvedPictures.indexOf(pictureUrl);
+        if (currentPictureIndex < 0) {
+            currentPictureIndex = solvedPictures.length - 1;
+        }
+        var newPictureUrl;
+        if (isPrev && currentPictureIndex > 0) {
+            currentPictureIndex -= 1;
+        } else if (!isPrev && currentPictureIndex < solvedPictures.length - 1) {
+            currentPictureIndex += 1;
+        } else {
+            return;
+        }
+        hud.getAt(6).visible = currentPictureIndex > 0;
+        hud.getAt(7).visible = currentPictureIndex < solvedPictures.length - 1;
+        newPictureUrl = solvedPictures[currentPictureIndex];
+        if (game.cache.checkImageKey(newPictureUrl)) {
+            showOtherPicture(newPictureUrl, isPrev);
+        } else {
+            game.load.image(newPictureUrl, 'assets/' + newPictureUrl);
+            game.load.onLoadComplete.addOnce(showOtherPicture, this, 0, newPictureUrl, isPrev);
+            game.load.start();
+        }
+    }
+
     function createHud() {
         var hudTextStyle = Object.assign({}, textStyle, { fill: '#FF9999' });
+        var hudTextStyleBig = Object.assign({}, hudTextStyle, { font: 'normal 48px 04b_03' });
 
         hud = game.add.group();
 
@@ -849,6 +911,41 @@ window.onload = function() {
         restartLevelText.events.onInputUp.add(handleRestartLevelButton);
         restartLevelText.visible = false;
         restartLevelText.x = nextLevelText.x - restartLevelText.width - 30;
+
+
+        var prevPictureText;
+        if (useBitmapFont) {
+            prevPictureText = game.add.bitmapText(axisWidth, axisWidth * 3 + 512 / 2, '04b_03-pink', '<', 48, hud);
+            prevPictureText.anchor.set(0.5, 0.5);
+            prevPictureText.hitArea = new Phaser.Rectangle(-axisWidth, -30, axisWidth * 2, 60);
+        } else {
+            prevPictureText = game.add.text(0, axisWidth * 3 + 512 / 2 - 30, '<', hudTextStyleBig);
+            prevPictureText.setTextBounds(0, 0, axisWidth * 2, 60);
+            var prevPictureTextBounds = prevPictureText.getBounds();
+            prevPictureText.hitArea = new Phaser.Rectangle((prevPictureTextBounds.width - axisWidth * 2) / 2, (prevPictureTextBounds.height - 60) / 2, axisWidth * 2, 60);
+            hud.add(restartLevelText);
+        }
+        prevPictureText.inputEnabled = true;
+        prevPictureText.input.useHandCursor = true;
+        prevPictureText.events.onInputUp.add(handlePrevNextPictureButton, this, 0, true);
+        prevPictureText.visible = false;
+
+        var nextPictureText;
+        if (useBitmapFont) {
+            nextPictureText = game.add.bitmapText(axisWidth * 3 + 1024, axisWidth * 3 + 512 / 2, '04b_03-pink', '>', 48, hud);
+            nextPictureText.anchor.set(0.5, 0.5);
+            nextPictureText.hitArea = new Phaser.Rectangle(-axisWidth, -30, axisWidth * 2, 60);
+        } else {
+            nextPictureText = game.add.text(axisWidth * 2 + 1024, axisWidth * 3 + 512 / 2 - 30, '>', hudTextStyleBig);
+            nextPictureText.setTextBounds(0, 0, axisWidth * 2, 60);
+            var nextPictureTextBounds = nextPictureText.getBounds();
+            nextPictureText.hitArea = new Phaser.Rectangle((nextPictureTextBounds.width - axisWidth * 2) / 2, (nextPictureTextBounds.height - 60) / 2, axisWidth * 2, 60);
+            hud.add(restartLevelText);
+        }
+        nextPictureText.inputEnabled = true;
+        nextPictureText.input.useHandCursor = true;
+        nextPictureText.events.onInputUp.add(handlePrevNextPictureButton, this, 0, false);
+        nextPictureText.visible = false;
     }
 
     function updateActionsCounter() {
@@ -965,20 +1062,6 @@ window.onload = function() {
         moveTween.onUpdateCallback(handleMoveTweenUpdate);
         moveTween.onComplete.add(handleMoveTweenUpdate);
 
-        if (useGrayscale && !useFilterForGrayscale) {
-            var bmd = game.make.bitmapData();
-            bmd.load('picture');
-            bmd.processPixelRGB(function forEachPixel(pixel) {
-                var gray = (pixel.r * 0.2126  + pixel.g * 0.7152 + pixel.b * 0.0722);
-                pixel.r =  gray;
-                pixel.g = gray;
-                pixel.b = gray;
-
-                return pixel;
-            }, this);
-            game.cache.addSpriteSheet('pictureGray', 'assets/' + pictureUrl, bmd.baseTexture.source, cellSize, cellSize);
-        }
-
         createCells();
         createAxes();
         createHud();
@@ -999,23 +1082,26 @@ window.onload = function() {
 
             var solvedPictures = localStorage.getItem('solvedPictures');
             solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
+            var currentPictureIndex = solvedPictures.indexOf(pictureUrl);
+            if (solvedPictures.indexOf(pictureUrl) >= 0) {
+                solvedPictures.splice(currentPictureIndex, 1);
+            }
+            currentPictureIndex = solvedPictures.length;
             solvedPictures.push(pictureUrl);
             localStorage.setItem('solvedPictures', solvedPictures.join('|'));
 
-            if (useGrayscale) {
-                if (useFilterForGrayscale) {
-                    game.add.tween(grayFilter).to({ gray: 0 }, tweenDuration * 2, 'Linear', true);
-                } else {
-                    picture.visible = true;
-                    game.add.tween(picture).to({ alpha: 1 }, tweenDuration * 2, 'Linear', true, tweenDuration);
-                }
-            }
             game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true)
                 .onComplete.addOnce(function (target) { target.visible = false; }, this);
             hud.getAt(1).visible = true;
             hud.getAt(2).visible = true;
             hud.getAt(3).visible = true;
             hud.getAt(5).visible = true;
+            if (currentPictureIndex > 0) {
+                hud.getAt(6).visible = true;
+            }
+            if (currentPictureIndex < solvedPictures.length - 1) {
+                hud.getAt(7).visible = true;
+            }
         }
     }
 
