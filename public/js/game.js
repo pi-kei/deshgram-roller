@@ -101,6 +101,7 @@ window.onload = function() {
         });
         if (keys.length === 0) {
             axesCount = Math.floor(Math.random() * 6) + 4;
+            pictureUrl = null;
         } else {
             var aspectRatios = {
                 1: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 1; }),
