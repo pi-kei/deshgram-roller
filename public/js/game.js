@@ -40,6 +40,7 @@ window.onload = function() {
     var pictureUrl;
     var timerStarted;
     var moveTween;
+    var maze;
 
     if (useBitmapFont) {
         createGame();
@@ -99,29 +100,31 @@ window.onload = function() {
             return solvedPictures.indexOf(key) === -1;
         });
         if (keys.length === 0) {
-            keys = Object.keys(picturesMetadata);
-        }
-        var aspectRatios = {
-            1: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 1; }),
-            2: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 2; })
-        };
+            axesCount = Math.floor(Math.random() * 6) + 4;
+        } else {
+            var aspectRatios = {
+                1: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 1; }),
+                2: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 2; })
+            };
 
-        axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
-        if (isNaN(axesCount) || axesCount < 4 || axesCount > 9) {
-            if (aspectRatios["1"] === aspectRatios["2"]) {
-                axesCount = Math.floor(Math.random() * 6) + 4;
-            } else {
-                axesCount = Math.floor(Math.random() * 3) * 2 + 4 + (aspectRatios["1"] === false ? 1 : 0);
+            axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
+            if (isNaN(axesCount) || axesCount < 4 || axesCount > 9) {
+                if (aspectRatios["1"] === aspectRatios["2"]) {
+                    axesCount = Math.floor(Math.random() * 6) + 4;
+                } else {
+                    axesCount = Math.floor(Math.random() * 3) * 2 + 4 + (aspectRatios["1"] === false ? 1 : 0);
+                }
+            } else if (
+                (axesCount % 2 === 0 && aspectRatios["1"] === false) ||
+                (axesCount % 2 === 1 && aspectRatios["2"] === false)
+            ) {
+                keys = Object.keys(picturesMetadata);
             }
-        } else if (
-            (axesCount % 2 === 0 && aspectRatios["1"] === false) ||
-            (axesCount % 2 === 1 && aspectRatios["2"] === false)
-        ) {
-            keys = Object.keys(picturesMetadata);
+            keys = keys.filter(function (key) {
+                return picturesMetadata[key].aspectRatio === (axesCount % 2) + 1;
+            });
+            pictureUrl = keys[Math.floor(Math.random() * keys.length)] || '';
         }
-        keys = keys.filter(function (key) {
-            return picturesMetadata[key].aspectRatio === (axesCount % 2) + 1;
-        });
 
         verticalAxesCount = Math.floor(axesCount / 2);
         horizontalAxesCount = Math.ceil(axesCount / 2);
@@ -139,11 +142,17 @@ window.onload = function() {
         actionsCounter = 0;
         picture = null;
 
-        pictureUrl = keys[Math.floor(Math.random() * keys.length)] || '';
+        if (!pictureUrl) {
+            maze = generateMaze(horizontalCellsCount, verticalCellsCount);
+        } else {
+            maze = null;
+        }
     }
 
     function preload () {
-        game.load.spritesheet('picture', 'assets/' + pictureUrl, cellSize, cellSize);
+        if (!maze) {
+            game.load.spritesheet('picture', 'assets/' + pictureUrl, cellSize, cellSize);
+        }
     }
 
     function handleMoveTweenUpdate(_, value, moveTweenData) {
@@ -222,6 +231,15 @@ window.onload = function() {
         }
     }
 
+    function getMazePiece(cellX, cellY) {
+        var mazeCell = maze[cellY][cellX];
+        var binary = (mazeCell.right ? '0' : '1') +
+            (mazeCell.left ? '0' : '1') +
+            (mazeCell.bottom ? '0' : '1') +
+            (mazeCell.top ? '0' : '1');
+        return 'mazePiece-' + binary + '-' + parseInt(binary, 2);
+    }
+
     function createCells () {
         cells = game.add.group();
         cells.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
@@ -241,10 +259,27 @@ window.onload = function() {
             };
         }
 
+        var tmp;
         for (var y = 0; y < verticalCellsCount; ++y) {
             for (var x = 0; x < horizontalCellsCount; ++x) {
                 var cellIndex = x + y * horizontalCellsCount;
-                var cell = game.add.image(0, 0, 'picture', cellIndex, useGroupsForCells ? groupNoMove : cells);
+                var cell = maze ?
+                    game.add.image(0, 0, 'gameAtlas', getMazePiece(x, y), useGroupsForCells ? groupNoMove : cells) :
+                    game.add.image(0, 0, 'picture', cellIndex, useGroupsForCells ? groupNoMove : cells);
+                if (maze) {
+                    if (x === 0 && y === 0) {
+                        tmp = game.add.group(cell.parent);
+                        tmp.add(cell);
+                        game.add.image(0, 0, 'gameAtlas', 'mazeStartFlag', tmp);
+                        cell = tmp;
+                    } else if (x === horizontalCellsCount - 1 && y === verticalCellsCount - 1) {
+                        tmp = game.add.group(cell.parent);
+                        tmp.add(cell);
+                        game.add.image(0, 0, 'gameAtlas', 'mazeFinishFlag', tmp);
+                        cell = tmp;
+                    }
+                    cell.scale.set(cellSize / 16);
+                }
                 cell.x = x * cellSize;
                 cell.y = y * cellSize;
                 if (!useGroupsForCells) {
@@ -713,8 +748,10 @@ window.onload = function() {
             return;
         }
 
-        var solvedPictures = localStorage.getItem('solvedPictures').split('|');
-        pictureUrl = solvedPictures[solvedPictures.length - 1];
+        if (!maze) {
+            var solvedPictures = localStorage.getItem('solvedPictures').split('|');
+            pictureUrl = solvedPictures[solvedPictures.length - 1];
+        }
 
         localStorage.setItem('solvedAxesCount', String(axesCount - 1));
 
@@ -802,7 +839,7 @@ window.onload = function() {
         solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
         var currentPictureIndex = solvedPictures.indexOf(pictureUrl);
         if (currentPictureIndex < 0) {
-            currentPictureIndex = solvedPictures.length - 1;
+            currentPictureIndex = solvedPictures.length;
         }
         var newPictureUrl;
         if (isPrev && currentPictureIndex > 0) {
@@ -1027,8 +1064,8 @@ window.onload = function() {
                 rotation: Math.PI * Math.random() * 4 - Math.PI * 2
             }, tweenDuration, 'Elastic', true, delay);
             game.add.tween(cell.scale).from({
-                x: 3,
-                y: 3
+                x: cell.scale.x * 3,
+                y: cell.scale.y * 3
             }, tweenDuration, 'Elastic', true, delay);
         }
         for (i = 0; i < axesCount; ++i) {
@@ -1087,8 +1124,10 @@ window.onload = function() {
                 solvedPictures.splice(currentPictureIndex, 1);
             }
             currentPictureIndex = solvedPictures.length;
-            solvedPictures.push(pictureUrl);
-            localStorage.setItem('solvedPictures', solvedPictures.join('|'));
+            if (!maze) {
+                solvedPictures.push(pictureUrl);
+                localStorage.setItem('solvedPictures', solvedPictures.join('|'));
+            }
 
             game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true)
                 .onComplete.addOnce(function (target) { target.visible = false; }, this);
