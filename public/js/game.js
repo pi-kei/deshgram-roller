@@ -63,7 +63,7 @@ window.onload = function() {
             maxPointers: 1,
             mouseWheel: false,
             enableDebug: false,
-            antialias: true
+            antialias: false
         });
         game.state.add('PreloadJson', { preload: preloadJson, create: startPlay });
         game.state.add('Play', { init: init, preload: preload, create: create });
