@@ -7,7 +7,7 @@ window.onload = function() {
     var useGroupsForCells = true;
     var useCacheForGroups = true;
     var axisWidth = 30;
-    var symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
+    var symbols;
     var textStyle = { fill: '#333333', font: 'normal 24px 04b_03', align: 'center', boundsAlignH: 'center', boundsAlignV: 'middle' };
     var tweenDuration = 1000;
     var tweenEase = 'Bounce.easeOut';
@@ -648,6 +648,7 @@ window.onload = function() {
         axes = game.add.group();
         axes.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         axes.y = 3 * axisWidth;
+        symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
 
         for (var y = 0; y < axesCount; ++y) {
             var axis = game.add.group(axes);
