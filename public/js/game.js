@@ -93,7 +93,7 @@ window.onload = function() {
     }
 
     function init() {
-        var solvedPictures = localStorage.getItem('solvedPictures');
+        var solvedPictures = localStorage.getItem('deshgramRollerSolvedPictures');
         solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
         var picturesMetadata = game.cache.getJSON('picturesMetadata');
         var keys = Object.keys(picturesMetadata).filter(function (key) {
@@ -108,7 +108,7 @@ window.onload = function() {
                 2: keys.some(function (key) { return picturesMetadata[key].aspectRatio === 2; })
             };
 
-            axesCount = Math.floor(Number(localStorage.getItem('solvedAxesCount') || '3') + 1);
+            axesCount = Math.floor(Number(localStorage.getItem('deshgramRollerSolvedAxesCount') || '3') + 1);
             if (isNaN(axesCount) || axesCount < 4 || axesCount > 9) {
                 if (aspectRatios["1"] === aspectRatios["2"]) {
                     axesCount = Math.floor(Math.random() * 6) + 4;
@@ -750,11 +750,11 @@ window.onload = function() {
         }
 
         if (!maze) {
-            var solvedPictures = localStorage.getItem('solvedPictures').split('|');
+            var solvedPictures = localStorage.getItem('deshgramRollerSolvedPictures').split('|');
             pictureUrl = solvedPictures[solvedPictures.length - 1];
         }
 
-        localStorage.setItem('solvedAxesCount', String(axesCount - 1));
+        localStorage.setItem('deshgramRollerSolvedAxesCount', String(axesCount - 1));
 
         shuffling = true;
         solved = false;
@@ -836,7 +836,7 @@ window.onload = function() {
         if (game.load.isLoading || game.tweens.getAll().length > 0) {
             return;
         }
-        var solvedPictures = localStorage.getItem('solvedPictures');
+        var solvedPictures = localStorage.getItem('deshgramRollerSolvedPictures');
         solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
         var currentPictureIndex = solvedPictures.indexOf(pictureUrl);
         if (currentPictureIndex < 0) {
@@ -1116,9 +1116,9 @@ window.onload = function() {
         if (getTotalDistanceFromInitialConfig() === 0) {
             solved = true;
 
-            localStorage.setItem('solvedAxesCount', String(axesCount));
+            localStorage.setItem('deshgramRollerSolvedAxesCount', String(axesCount));
 
-            var solvedPictures = localStorage.getItem('solvedPictures');
+            var solvedPictures = localStorage.getItem('deshgramRollerSolvedPictures');
             solvedPictures = solvedPictures === null ? [] : solvedPictures.split('|');
             var currentPictureIndex = solvedPictures.indexOf(pictureUrl);
             if (solvedPictures.indexOf(pictureUrl) >= 0) {
@@ -1127,7 +1127,7 @@ window.onload = function() {
             currentPictureIndex = solvedPictures.length;
             if (!maze) {
                 solvedPictures.push(pictureUrl);
-                localStorage.setItem('solvedPictures', solvedPictures.join('|'));
+                localStorage.setItem('deshgramRollerSolvedPictures', solvedPictures.join('|'));
             }
 
             game.add.tween(axes).to({ alpha: 0 }, tweenDuration, 'Linear', true)
