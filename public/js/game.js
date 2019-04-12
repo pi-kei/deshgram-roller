@@ -100,7 +100,7 @@ window.onload = function() {
             return solvedPictures.indexOf(key) === -1;
         });
         if (keys.length === 0) {
-            axesCount = Math.floor(Math.random() * 6) + 4;
+            axesCount = Math.floor(Math.random() * 7) + 4;
             pictureUrl = null;
         } else {
             var aspectRatios = {
@@ -109,11 +109,13 @@ window.onload = function() {
             };
 
             axesCount = Math.floor(Number(localStorage.getItem('deshgramRollerSolvedAxesCount') || '3') + 1);
-            if (isNaN(axesCount) || axesCount < 4 || axesCount > 9) {
+            if (isNaN(axesCount) || axesCount < 4 || axesCount > 10) {
                 if (aspectRatios["1"] === aspectRatios["2"]) {
-                    axesCount = Math.floor(Math.random() * 6) + 4;
+                    axesCount = Math.floor(Math.random() * 7) + 4;
+                } else if (aspectRatios["1"] === false) {
+                    axesCount = Math.floor(Math.random() * 3) * 2 + 4 + 1;
                 } else {
-                    axesCount = Math.floor(Math.random() * 3) * 2 + 4 + (aspectRatios["1"] === false ? 1 : 0);
+                    axesCount = Math.floor(Math.random() * 4) * 2 + 4;
                 }
             } else if (
                 (axesCount % 2 === 0 && aspectRatios["1"] === false) ||
@@ -648,7 +650,7 @@ window.onload = function() {
         axes = game.add.group();
         axes.x = 2 * axisWidth + (horizontalAxesCount === verticalAxesCount ? 256 : 0);
         axes.y = 3 * axisWidth;
-        symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split('')).slice(0, 18);
+        symbols = Phaser.ArrayUtils.shuffle('abcdefghijklmopqrstuvwxyz'.split(''));
 
         for (var y = 0; y < axesCount; ++y) {
             var axis = game.add.group(axes);
